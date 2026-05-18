@@ -1,0 +1,336 @@
+import com.ftn.model.Location;
+import com.ftn.model.ThresholdConfig;
+import com.ftn.model.LocationType;
+import com.ftn.model.SensorType;
+import com.ftn.model.ParameterType;
+import com.ftn.model.StatusLevel;
+import com.ftn.model.FlowLevel;
+import com.ftn.model.PumpState;
+import com.ftn.model.SensorReading;
+import com.ftn.model.WaterLevelStatus;
+import com.ftn.model.FlowRateStatus;
+import com.ftn.model.PumpOperationalStatus;
+
+
+rule "Klasifikacija nivoa vode - NORMAL"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 normalMax >= $val)
+        not WaterLevelStatus(location == $loc)
+    then
+        insert(new WaterLevelStatus($loc, StatusLevel.NORMAL, $val, $reading.getTimestamp()));
+end
+
+rule "Klasifikacija nivoa vode - ELEVATED"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 normalMax < $val, warningMax >= $val)
+        not WaterLevelStatus(location == $loc)
+    then
+        insert(new WaterLevelStatus($loc, StatusLevel.ELEVATED, $val, $reading.getTimestamp()));
+end
+
+rule "Klasifikacija nivoa vode - HIGH"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 warningMax < $val, criticalMax >= $val)
+        not WaterLevelStatus(location == $loc)
+    then
+        insert(new WaterLevelStatus($loc, StatusLevel.HIGH, $val, $reading.getTimestamp()));
+end
+
+rule "Klasifikacija nivoa vode - CRITICAL"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 criticalMax < $val)
+        not WaterLevelStatus(location == $loc)
+    then
+        insert(new WaterLevelStatus($loc, StatusLevel.CRITICAL, $val, $reading.getTimestamp()));
+end
+
+rule "Azuriranje nivoa vode - NORMAL"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 normalMax >= $val)
+        $existing: WaterLevelStatus(location == $loc, level != StatusLevel.NORMAL,
+                                    timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(StatusLevel.NORMAL),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje nivoa vode - ELEVATED"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 normalMax < $val, warningMax >= $val)
+        $existing: WaterLevelStatus(location == $loc, level != StatusLevel.ELEVATED,
+                                    timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(StatusLevel.ELEVATED),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje nivoa vode - HIGH"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 warningMax < $val, criticalMax >= $val)
+        $existing: WaterLevelStatus(location == $loc, level != StatusLevel.HIGH,
+                                    timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(StatusLevel.HIGH),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje nivoa vode - CRITICAL"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.WATER_LEVEL,
+                                 criticalMax < $val)
+        $existing: WaterLevelStatus(location == $loc, level != StatusLevel.CRITICAL,
+                                    timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(StatusLevel.CRITICAL),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Klasifikacija protoka - LOW"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.FLOW_RATE,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.FLOW_RATE,
+                                 normalMax > $val)
+        not FlowRateStatus(location == $loc)
+    then
+        insert(new FlowRateStatus($loc, FlowLevel.LOW, $val, $reading.getTimestamp()));
+end
+
+rule "Klasifikacija protoka - NORMAL"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.FLOW_RATE,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.FLOW_RATE,
+                                 normalMax <= $val, warningMax >= $val)
+        not FlowRateStatus(location == $loc)
+    then
+        insert(new FlowRateStatus($loc, FlowLevel.NORMAL, $val, $reading.getTimestamp()));
+end
+
+rule "Klasifikacija protoka - HIGH"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.FLOW_RATE,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.FLOW_RATE,
+                                 warningMax < $val)
+        not FlowRateStatus(location == $loc)
+    then
+        insert(new FlowRateStatus($loc, FlowLevel.HIGH, $val, $reading.getTimestamp()));
+end
+
+rule "Azuriranje protoka - LOW"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.FLOW_RATE,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.FLOW_RATE,
+                                 normalMax > $val)
+        $existing: FlowRateStatus(location == $loc, level != FlowLevel.LOW,
+                                  timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(FlowLevel.LOW),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje protoka - NORMAL"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.FLOW_RATE,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.FLOW_RATE,
+                                 normalMax <= $val, warningMax >= $val)
+        $existing: FlowRateStatus(location == $loc, level != FlowLevel.NORMAL,
+                                  timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(FlowLevel.NORMAL),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje protoka - HIGH"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.FLOW_RATE,
+                                $loc: location, $val: value)
+        $thresh: ThresholdConfig(locationType == $loc.type,
+                                 parameterType == ParameterType.FLOW_RATE,
+                                 warningMax < $val)
+        $existing: FlowRateStatus(location == $loc, level != FlowLevel.HIGH,
+                                  timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setLevel(FlowLevel.HIGH),
+            setValue($val),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+// Konvencija: value 1.0 = ACTIVE, 0.0 = IDLE, -1.0 = FAULTY, -2.0 = MAINTENANCE
+
+rule "Status pumpe - ACTIVE"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == 1.0)
+        not PumpOperationalStatus(location == $loc, pumpId == $pumpId)
+    then
+        insert(new PumpOperationalStatus($loc, $pumpId, PumpState.ACTIVE,
+                                         $reading.getTimestamp()));
+end
+
+rule "Status pumpe - IDLE"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == 0.0)
+        not PumpOperationalStatus(location == $loc, pumpId == $pumpId)
+    then
+        insert(new PumpOperationalStatus($loc, $pumpId, PumpState.IDLE,
+                                         $reading.getTimestamp()));
+end
+
+rule "Status pumpe - FAULTY"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == -1.0)
+        not PumpOperationalStatus(location == $loc, pumpId == $pumpId)
+    then
+        insert(new PumpOperationalStatus($loc, $pumpId, PumpState.FAULTY,
+                                         $reading.getTimestamp()));
+end
+
+rule "Status pumpe - MAINTENANCE"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == -2.0)
+        not PumpOperationalStatus(location == $loc, pumpId == $pumpId)
+    then
+        insert(new PumpOperationalStatus($loc, $pumpId, PumpState.MAINTENANCE,
+                                         $reading.getTimestamp()));
+end
+
+rule "Azuriranje statusa pumpe - ACTIVE"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == 1.0)
+        $existing: PumpOperationalStatus(location == $loc, pumpId == $pumpId,
+                                         state != PumpState.ACTIVE,
+                                         timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setState(PumpState.ACTIVE),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje statusa pumpe - IDLE"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == 0.0)
+        $existing: PumpOperationalStatus(location == $loc, pumpId == $pumpId,
+                                         state != PumpState.IDLE,
+                                         timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setState(PumpState.IDLE),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje statusa pumpe - FAULTY"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == -1.0)
+        $existing: PumpOperationalStatus(location == $loc, pumpId == $pumpId,
+                                         state != PumpState.FAULTY,
+                                         timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setState(PumpState.FAULTY),
+            setTimestamp($reading.getTimestamp())
+        };
+end
+
+rule "Azuriranje statusa pumpe - MAINTENANCE"
+    salience 100
+    when
+        $reading: SensorReading(sensorType == SensorType.PUMP_STATUS,
+                                $loc: location, $pumpId: sensorName, value == -2.0)
+        $existing: PumpOperationalStatus(location == $loc, pumpId == $pumpId,
+                                         state != PumpState.MAINTENANCE,
+                                         timestamp < $reading.timestamp)
+    then
+        modify($existing) {
+            setState(PumpState.MAINTENANCE),
+            setTimestamp($reading.getTimestamp())
+        };
+end

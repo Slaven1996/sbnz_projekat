@@ -1,0 +1,244 @@
+import com.ftn.model.Location;
+import com.ftn.model.LocationType;
+import com.ftn.model.StatusLevel;
+import com.ftn.model.FlowLevel;
+import com.ftn.model.PumpState;
+import com.ftn.model.RiskLevel;
+import com.ftn.model.CapacityLevel;
+import com.ftn.model.WaterLevelStatus;
+import com.ftn.model.FlowRateStatus;
+import com.ftn.model.PumpOperationalStatus;
+import com.ftn.model.WeatherCondition;
+import com.ftn.model.FloodRiskAssessment;
+import com.ftn.model.StationCapacity;
+
+
+rule "Rizik od poplave - LOW"
+    salience 50
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.NORMAL)
+        FlowRateStatus(location == $loc, level == FlowLevel.NORMAL)
+        WeatherCondition(precipitation < 10)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.LOW,
+            "Nivo i protok normalni, padavine minimalne"));
+end
+
+rule "Rizik - MODERATE - povisen nivo"
+    salience 60
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.ELEVATED)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.MODERATE,
+            "Povisen nivo vode"));
+end
+
+rule "Rizik - MODERATE - padavine"
+    salience 60
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.NORMAL)
+        WeatherCondition(precipitation > 30)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.MODERATE,
+            "Nivo normalan, ali intenzivne padavine"));
+end
+
+rule "Rizik - HIGH - visok nivo"
+    salience 70
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.HIGH)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.HIGH,
+            "Visok nivo vode"));
+end
+
+rule "Rizik - HIGH - povisen nivo i padavine"
+    salience 70
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.ELEVATED)
+        WeatherCondition(precipitation > 50)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.HIGH,
+            "Povisen nivo i veoma intenzivne padavine"));
+end
+
+rule "Rizik - EXTREME - kritican nivo"
+    salience 80
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.CRITICAL)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.EXTREME,
+            "Kritican nivo vode"));
+end
+
+rule "Rizik - EXTREME - visok nivo i protok"
+    salience 80
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.HIGH)
+        FlowRateStatus(location == $loc, level == FlowLevel.HIGH)
+        not FloodRiskAssessment(location == $loc)
+    then
+        insert(new FloodRiskAssessment($loc, RiskLevel.EXTREME,
+            "Visok nivo i visok protok istovremeno"));
+end
+
+rule "Azuriranje rizika - MODERATE - povisen nivo"
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.ELEVATED)
+        $risk: FloodRiskAssessment(location == $loc, riskLevel == RiskLevel.LOW)
+    then
+        modify($risk) {
+            setRiskLevel(RiskLevel.MODERATE),
+            setReason("Nivo vode porastao na ELEVATED")
+        };
+end
+
+rule "Azuriranje rizika - eskalacija na HIGH"
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.HIGH)
+        $risk: FloodRiskAssessment(location == $loc,
+                                   riskLevel != RiskLevel.HIGH,
+                                   riskLevel != RiskLevel.EXTREME)
+    then
+        modify($risk) {
+            setRiskLevel(RiskLevel.HIGH),
+            setReason("Nivo vode porastao na HIGH")
+        };
+end
+
+rule "Azuriranje rizika - eskalacija na EXTREME"
+    when
+        $loc: Location()
+        WaterLevelStatus(location == $loc, level == StatusLevel.CRITICAL)
+        $risk: FloodRiskAssessment(location == $loc, riskLevel != RiskLevel.EXTREME)
+    then
+        modify($risk) {
+            setRiskLevel(RiskLevel.EXTREME),
+            setReason("Nivo vode dostigao CRITICAL")
+        };
+end
+
+rule "Kapacitet stanice - FULL (>=80% aktivnih)"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.8)
+        not StationCapacity(location == $loc)
+    then
+        insert(new StationCapacity($loc, CapacityLevel.FULL, $a, $t));
+end
+
+rule "Kapacitet stanice - REDUCED (50-80% aktivnih)"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.5)
+        eval((double) $a / $t < 0.8)
+        not StationCapacity(location == $loc)
+    then
+        insert(new StationCapacity($loc, CapacityLevel.REDUCED, $a, $t));
+end
+
+rule "Kapacitet stanice - MINIMAL (20-50% aktivnih)"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.2)
+        eval((double) $a / $t < 0.5)
+        not StationCapacity(location == $loc)
+    then
+        insert(new StationCapacity($loc, CapacityLevel.MINIMAL, $a, $t));
+end
+
+rule "Kapacitet stanice - OFFLINE (<20% aktivnih)"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t < 0.2)
+        not StationCapacity(location == $loc)
+    then
+        insert(new StationCapacity($loc, CapacityLevel.OFFLINE, $a, $t));
+end
+
+rule "Azuriranje kapaciteta stanice - promjena aktivnih pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        $existing: StationCapacity(location == $loc)
+        eval($existing.getActivePumps() != $a)
+    then
+        double ratio = (double) $a / $t;
+        CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
+                                : (ratio >= 0.5) ? CapacityLevel.REDUCED
+                                : (ratio >= 0.2) ? CapacityLevel.MINIMAL
+                                : CapacityLevel.OFFLINE;
+        modify($existing) {
+            setLevel(newLevel),
+            setActivePumps($a),
+            setTotalPumps($t)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - promjena ukupnog broja pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        $existing: StationCapacity(location == $loc)
+        eval($existing.getTotalPumps() != $t)
+    then
+        double ratio = (double) $a / $t;
+        CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
+                                : (ratio >= 0.5) ? CapacityLevel.REDUCED
+                                : (ratio >= 0.2) ? CapacityLevel.MINIMAL
+                                : CapacityLevel.OFFLINE;
+        modify($existing) {
+            setLevel(newLevel),
+            setActivePumps($a),
+            setTotalPumps($t)
+        };
+end
