@@ -204,8 +204,7 @@ rule "Azuriranje kapaciteta stanice - promjena aktivnih pumpi"
         Number($a: intValue) from accumulate(
             PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
             count(1))
-        $existing: StationCapacity(location == $loc)
-        eval($existing.getActivePumps() != $a)
+        $existing: StationCapacity(location == $loc, activePumps != $a)
     then
         double ratio = (double) $a / $t;
         CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
@@ -228,8 +227,7 @@ rule "Azuriranje kapaciteta stanice - promjena ukupnog broja pumpi"
         Number($a: intValue) from accumulate(
             PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
             count(1))
-        $existing: StationCapacity(location == $loc)
-        eval($existing.getTotalPumps() != $t)
+        $existing: StationCapacity(location == $loc, totalPumps != $t)
     then
         double ratio = (double) $a / $t;
         CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL

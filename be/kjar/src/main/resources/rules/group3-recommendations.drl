@@ -80,7 +80,7 @@ rule "Preporuka - ACTIVATE - ekstreman rizik"
             Priority.CRITICAL, "Aktivirati vanredni rezim - ekstreman rizik"));
 end
 
-rule "Preporuka - ACTIVATE - visok rizik minimalan kapacitet"
+rule "Preporuka - ACTIVATE - visok rizik  i minimalan kapacitet"
     salience 30
     when
         $loc: Location()
@@ -93,7 +93,7 @@ rule "Preporuka - ACTIVATE - visok rizik minimalan kapacitet"
             "Aktivirati vanredni rezim - visok rizik i minimalan kapacitet"));
 end
 
-rule "Preporuka - EVACUATE - ekstreman minimalan"
+rule "Preporuka - EVACUATE - ekstreman rizik i minimalan kapacitet"
     salience 40
     when
         $loc: Location()
@@ -106,7 +106,7 @@ rule "Preporuka - EVACUATE - ekstreman minimalan"
             "EVAKUACIJA - ekstreman rizik i minimalan kapacitet"));
 end
 
-rule "Preporuka - EVACUATE - ekstreman offline"
+rule "Preporuka - EVACUATE - ekstreman rizik i stanica offline"
     salience 40
     when
         $loc: Location()
