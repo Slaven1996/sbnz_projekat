@@ -49,4 +49,10 @@ public class WeatherStation implements Serializable {
 
     public LocalDateTime getLastUpdate() { return lastUpdate; }
     public void setLastUpdate(LocalDateTime lastUpdate) { this.lastUpdate = lastUpdate; }
+
+    @Override
+    public String toString() {
+        return "WeatherStation[id=" + id + ", locationCode=" + locationCode
+                + ", precipitation=" + precipitation + ", lastUpdate=" + lastUpdate + "]";
+    }
 }

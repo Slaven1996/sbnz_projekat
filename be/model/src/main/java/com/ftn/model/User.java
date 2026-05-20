@@ -65,4 +65,10 @@ public class User implements Serializable {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    @Override
+    public String toString() {
+        return "User[id=" + id + ", userCode=" + userCode + ", name=" + name
+                + ", lastName=" + lastName + ", email=" + email + ", role=" + role + ", active=" + active + "]";
+    }
 }

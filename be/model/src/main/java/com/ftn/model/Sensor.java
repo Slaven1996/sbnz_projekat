@@ -94,4 +94,11 @@ public class Sensor implements Serializable {
 
     public Integer getLogInterval() { return logInterval; }
     public void setLogInterval(Integer logInterval) { this.logInterval = logInterval; }
+
+    @Override
+    public String toString() {
+        return "Sensor[id=" + id + ", tagName=" + tagName + ", displayCode=" + displayCode
+                + ", sensorType=" + sensorType + ", location=" + (location != null ? location.getCode() : "?")
+                + ", unit=" + (unit != null ? unit.getCode() : "?") + "]";
+    }
 }

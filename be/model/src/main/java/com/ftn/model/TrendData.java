@@ -60,4 +60,11 @@ public class TrendData implements Serializable {
 
     public boolean isValid() { return valid; }
     public void setValid(boolean valid) { this.valid = valid; }
+
+    @Override
+    public String toString() {
+        return "TrendData[id=" + id + ", locationCode=" + locationCode
+                + ", tagName=" + tagName + ", logTime=" + logTime
+                + ", tagValue=" + tagValue + ", valid=" + valid + "]";
+    }
 }
