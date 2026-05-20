@@ -251,21 +251,21 @@ public class HydroMonitoringExamples {
     }
 
     /**
-     *  - RIVER:        WL n=200, w=350, c=500   |  FR n=2000, w=3000, c=4000
-     *  - CANAL:        WL n=100, w=180, c=250   |  FR n=500,  w=900,  c=1500
-     *  - RESERVOIR:    WL n=500, w=700, c=850   |  FR n=100,  w=300,  c=600
-     *  - PUMP_STATION: WL n=150, w=250, c=350   |  FR n=100,  w=200,  c=400
-     */
+     - RIVER:        WL n=200, w=350, c=500   |  FR n=2000, w=3000
+     - CANAL:        WL n=100, w=180, c=250   |  FR n=500,  w=900
+     - RESERVOIR:    WL n=500, w=700, c=850   |  FR n=100,  w=300
+     - PUMP_STATION: WL n=150, w=250, c=350   |  FR n=100,  w=200
+    */
     private static void insertDefaultThresholds(KieSession k) {
         k.insert(new ThresholdConfig(LocationType.RIVER,        ParameterType.WATER_LEVEL, 200, 350, 500));
         k.insert(new ThresholdConfig(LocationType.CANAL,        ParameterType.WATER_LEVEL, 100, 180, 250));
         k.insert(new ThresholdConfig(LocationType.RESERVOIR,    ParameterType.WATER_LEVEL, 500, 700, 850));
         k.insert(new ThresholdConfig(LocationType.PUMP_STATION, ParameterType.WATER_LEVEL, 150, 250, 350));
         
-        k.insert(new ThresholdConfig(LocationType.RIVER,        ParameterType.FLOW_RATE,   2000, 3000, 4000));
-        k.insert(new ThresholdConfig(LocationType.CANAL,        ParameterType.FLOW_RATE,    500,  900, 1500));
-        k.insert(new ThresholdConfig(LocationType.RESERVOIR,    ParameterType.FLOW_RATE,    100,  300,  600));
-        k.insert(new ThresholdConfig(LocationType.PUMP_STATION, ParameterType.FLOW_RATE,    100,  200,  400));
+        k.insert(new ThresholdConfig(LocationType.RIVER,        ParameterType.FLOW_RATE,   2000, 3000));
+        k.insert(new ThresholdConfig(LocationType.CANAL,        ParameterType.FLOW_RATE,    500,  900));
+        k.insert(new ThresholdConfig(LocationType.RESERVOIR,    ParameterType.FLOW_RATE,    100,  300));
+        k.insert(new ThresholdConfig(LocationType.PUMP_STATION, ParameterType.FLOW_RATE,    100,  200));
     }
 
     private static void printHeader(String title) {

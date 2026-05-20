@@ -40,8 +40,8 @@ public class ThresholdConfig implements Serializable {
     @Column(name = "warning_max", nullable = false)
     private double warningMax;
 
-    @Column(name = "critical_max", nullable = false)
-    private double criticalMax;
+    @Column(name = "critical_max", nullable = true)
+    private Double criticalMax;
 
     public ThresholdConfig() {
     }
@@ -53,6 +53,15 @@ public class ThresholdConfig implements Serializable {
         this.normalMax = normalMax;
         this.warningMax = warningMax;
         this.criticalMax = criticalMax;
+    }
+
+    public ThresholdConfig(LocationType locationType, ParameterType parameterType,
+                           double normalMax, double warningMax) {
+        this.locationType = locationType;
+        this.parameterType = parameterType;
+        this.normalMax = normalMax;
+        this.warningMax = warningMax;
+        this.criticalMax = null;
     }
 
     public Long getId() { return id; }
@@ -70,8 +79,8 @@ public class ThresholdConfig implements Serializable {
     public double getWarningMax() { return warningMax; }
     public void setWarningMax(double warningMax) { this.warningMax = warningMax; }
 
-    public double getCriticalMax() { return criticalMax; }
-    public void setCriticalMax(double criticalMax) { this.criticalMax = criticalMax; }
+    public Double getCriticalMax() { return criticalMax; }
+    public void setCriticalMax(Double criticalMax) { this.criticalMax = criticalMax; }
 
     @Override
     public String toString() {
