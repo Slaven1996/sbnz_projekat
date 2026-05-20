@@ -2,6 +2,8 @@ package com.ftn.model;
 
 import java.io.Serializable;
 
+import com.ftn.model.enums.CapacityLevel;
+
 public class StationCapacity implements Serializable {
 
     private static final long serialVersionUID = 1L;

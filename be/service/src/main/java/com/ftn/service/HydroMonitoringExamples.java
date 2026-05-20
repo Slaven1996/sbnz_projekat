@@ -10,9 +10,9 @@ import org.kie.api.runtime.KieSession;
 import com.ftn.model.Location;
 import com.ftn.model.ThresholdConfig;
 import com.ftn.model.Zone;
-import com.ftn.model.LocationType;
-import com.ftn.model.ParameterType;
-import com.ftn.model.SensorType;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.ParameterType;
+import com.ftn.model.enums.SensorType;
 import com.ftn.model.FloodRiskAssessment;
 import com.ftn.model.FlowRateStatus;
 import com.ftn.model.InterventionRecommendation;
@@ -26,6 +26,8 @@ import com.ftn.model.WeatherCondition;
 public class HydroMonitoringExamples {
 
     public static void main(String[] args) {
+
+        System.out.println();
 
         // Scenario 1: Sve normalno.
         // Jedna RIVER lokacija, nivo 120 cm (< normalMax 200), protok 1500

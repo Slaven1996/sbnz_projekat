@@ -1,11 +1,11 @@
 import com.ftn.model.Location;
 import com.ftn.model.ThresholdConfig;
-import com.ftn.model.LocationType;
-import com.ftn.model.SensorType;
-import com.ftn.model.ParameterType;
-import com.ftn.model.StatusLevel;
-import com.ftn.model.FlowLevel;
-import com.ftn.model.PumpState;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.SensorType;
+import com.ftn.model.enums.ParameterType;
+import com.ftn.model.enums.StatusLevel;
+import com.ftn.model.enums.FlowLevel;
+import com.ftn.model.enums.PumpState;
 import com.ftn.model.SensorReading;
 import com.ftn.model.WaterLevelStatus;
 import com.ftn.model.FlowRateStatus;

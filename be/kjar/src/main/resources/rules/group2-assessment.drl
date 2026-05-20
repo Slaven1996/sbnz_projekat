@@ -1,10 +1,10 @@
 import com.ftn.model.Location;
-import com.ftn.model.LocationType;
-import com.ftn.model.StatusLevel;
-import com.ftn.model.FlowLevel;
-import com.ftn.model.PumpState;
-import com.ftn.model.RiskLevel;
-import com.ftn.model.CapacityLevel;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.StatusLevel;
+import com.ftn.model.enums.FlowLevel;
+import com.ftn.model.enums.PumpState;
+import com.ftn.model.enums.RiskLevel;
+import com.ftn.model.enums.CapacityLevel;
 import com.ftn.model.WaterLevelStatus;
 import com.ftn.model.FlowRateStatus;
 import com.ftn.model.PumpOperationalStatus;

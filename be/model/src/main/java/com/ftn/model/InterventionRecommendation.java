@@ -2,6 +2,9 @@ package com.ftn.model;
 
 import java.io.Serializable;
 
+import com.ftn.model.enums.ActionType;
+import com.ftn.model.enums.Priority;
+
 public class InterventionRecommendation implements Serializable {
 
     private static final long serialVersionUID = 1L;

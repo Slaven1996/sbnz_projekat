@@ -2,6 +2,8 @@ package com.ftn.model;
 
 import java.io.Serializable;
 
+import com.ftn.model.enums.AlertLevel;
+
 public class SystemAlert implements Serializable {
 
     private static final long serialVersionUID = 1L;

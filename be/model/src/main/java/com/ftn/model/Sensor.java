@@ -1,7 +1,6 @@
 package com.ftn.model;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,6 +13,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import com.ftn.model.enums.SensorType;
 
 @Entity
 @Table(name = "sensors")
@@ -93,17 +94,4 @@ public class Sensor implements Serializable {
 
     public Integer getLogInterval() { return logInterval; }
     public void setLogInterval(Integer logInterval) { this.logInterval = logInterval; }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Sensor)) return false;
-        Sensor other = (Sensor) o;
-        return Objects.equals(location, other.location) && Objects.equals(tagName, other.tagName);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(location, tagName);
-    }
 }

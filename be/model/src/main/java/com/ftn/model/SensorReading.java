@@ -3,6 +3,8 @@ package com.ftn.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.ftn.model.enums.SensorType;
+
 public class SensorReading implements Serializable {
 
     private static final long serialVersionUID = 1L;

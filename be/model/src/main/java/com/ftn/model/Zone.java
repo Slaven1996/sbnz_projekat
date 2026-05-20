@@ -3,7 +3,6 @@ package com.ftn.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -56,19 +55,6 @@ public class Zone implements Serializable {
     public void addLocation(Location loc) {
         this.locations.add(loc);
         loc.setZone(this);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Zone)) return false;
-        Zone other = (Zone) o;
-        return Objects.equals(code, other.code);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(code);
     }
 
     @Override

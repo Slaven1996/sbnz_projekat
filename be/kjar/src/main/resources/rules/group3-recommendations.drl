@@ -1,10 +1,10 @@
 import com.ftn.model.Location;
-import com.ftn.model.LocationType;
-import com.ftn.model.RiskLevel;
-import com.ftn.model.CapacityLevel;
-import com.ftn.model.ActionType;
-import com.ftn.model.Priority;
-import com.ftn.model.AlertLevel;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.RiskLevel;
+import com.ftn.model.enums.CapacityLevel;
+import com.ftn.model.enums.ActionType;
+import com.ftn.model.enums.Priority;
+import com.ftn.model.enums.AlertLevel;
 import com.ftn.model.FloodRiskAssessment;
 import com.ftn.model.StationCapacity;
 import com.ftn.model.InterventionRecommendation;

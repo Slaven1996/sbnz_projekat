@@ -1,4 +1,4 @@
-package com.ftn.model;
+package com.ftn.model.enums;
 
 public enum ActionType {
     MONITOR, PREPARE, ACTIVATE, EVACUATE
