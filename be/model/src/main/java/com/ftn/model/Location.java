@@ -12,6 +12,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import com.ftn.model.enums.LocationType;
@@ -52,6 +53,9 @@ public class Location implements Serializable {
 
     @Column(name = "active", nullable = false)
     private boolean active = true;
+
+    @OneToOne(mappedBy = "location", fetch = FetchType.LAZY)
+    private WeatherCondition weatherCondition;
 
     public Location() {
     }
@@ -95,6 +99,9 @@ public class Location implements Serializable {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public WeatherCondition getWeatherCondition() { return weatherCondition; }
+    public void setWeatherCondition(WeatherCondition weatherCondition) { this.weatherCondition = weatherCondition; }
 
     @Override
     public String toString() {
