@@ -19,7 +19,7 @@ rule "Rizik od poplave - LOW"
         $loc: Location()
         WaterLevelStatus(location == $loc, level == StatusLevel.NORMAL)
         FlowRateStatus(location == $loc, level == FlowLevel.NORMAL)
-        WeatherCondition(precipitation < 10)
+        WeatherCondition(location == $loc, precipitation < 10)
         not FloodRiskAssessment(location == $loc)
     then
         insert(new FloodRiskAssessment($loc, RiskLevel.LOW,
@@ -42,7 +42,7 @@ rule "Rizik - MODERATE - padavine"
     when
         $loc: Location()
         WaterLevelStatus(location == $loc, level == StatusLevel.NORMAL)
-        WeatherCondition(precipitation > 30)
+        WeatherCondition(location == $loc, precipitation > 30)
         not FloodRiskAssessment(location == $loc)
     then
         insert(new FloodRiskAssessment($loc, RiskLevel.MODERATE,
@@ -65,7 +65,7 @@ rule "Rizik - HIGH - povisen nivo i padavine"
     when
         $loc: Location()
         WaterLevelStatus(location == $loc, level == StatusLevel.ELEVATED)
-        WeatherCondition(precipitation > 50)
+        WeatherCondition(location == $loc, precipitation > 50)
         not FloodRiskAssessment(location == $loc)
     then
         insert(new FloodRiskAssessment($loc, RiskLevel.HIGH,

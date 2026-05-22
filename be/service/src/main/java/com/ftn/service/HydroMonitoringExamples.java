@@ -93,7 +93,7 @@ public class HydroMonitoringExamples {
             Location river = new Location("LOC_NORMAL", LocationType.RIVER);
             kSession.insert(river);
             insertDefaultThresholds(kSession);
-            kSession.insert(new WeatherCondition(5.0));
+            kSession.insert(new WeatherCondition(river, 5.0));
             kSession.insert(new SensorReading(river, SensorType.WATER_LEVEL, "WL", 120.0));
             kSession.insert(new SensorReading(river, SensorType.FLOW_RATE, "FR", 1500.0));
 
@@ -114,7 +114,7 @@ public class HydroMonitoringExamples {
             Location river = new Location("LOC_RAIN", LocationType.RIVER);
             kSession.insert(river);
             insertDefaultThresholds(kSession);
-            kSession.insert(new WeatherCondition(45.0));
+            kSession.insert(new WeatherCondition(river, 45.0));
             kSession.insert(new SensorReading(river, SensorType.WATER_LEVEL, "WL", 150.0));
             kSession.insert(new SensorReading(river, SensorType.FLOW_RATE, "FR", 1500.0));
 
@@ -135,7 +135,7 @@ public class HydroMonitoringExamples {
             Location river = new Location("LOC_ESC", LocationType.RIVER);
             kSession.insert(river);
             insertDefaultThresholds(kSession);
-            kSession.insert(new WeatherCondition(2.0));
+            kSession.insert(new WeatherCondition(river, 2.0));
 
             double[] readings = {180.0, 300.0, 400.0, 600.0};
             for (int i = 0; i < readings.length; i++) {
@@ -166,7 +166,7 @@ public class HydroMonitoringExamples {
             Location pump = new Location("LOC_PUMP_DOWN", LocationType.PUMP_STATION);
             kSession.insert(pump);
             insertDefaultThresholds(kSession);
-            kSession.insert(new WeatherCondition(60.0));
+            kSession.insert(new WeatherCondition(pump, 60.0));
             kSession.insert(new SensorReading(pump, SensorType.WATER_LEVEL, "WL", 400.0));
             for (int i = 1; i <= 5; i++) {
                 kSession.insert(new SensorReading(pump, SensorType.PUMP_STATUS, "P" + i, -1.0));
@@ -193,7 +193,9 @@ public class HydroMonitoringExamples {
             kSession.insert(l3);
 
             insertDefaultThresholds(kSession);
-            kSession.insert(new WeatherCondition(30.0));
+            kSession.insert(new WeatherCondition(l1, 30.0));
+            kSession.insert(new WeatherCondition(l2, 30.0));
+            kSession.insert(new WeatherCondition(l3, 30.0));
 
             kSession.insert(new SensorReading(l1, SensorType.WATER_LEVEL, "WL1", 550.0));
             kSession.insert(new SensorReading(l2, SensorType.WATER_LEVEL, "WL2", 600.0));
@@ -225,7 +227,8 @@ public class HydroMonitoringExamples {
 
             insertDefaultThresholds(kSession);
 
-            kSession.insert(new WeatherCondition(45.0));
+            kSession.insert(new WeatherCondition(river, 45.0));
+            kSession.insert(new WeatherCondition(pump, 45.0));
 
             kSession.insert(new SensorReading(river, SensorType.WATER_LEVEL, "WL_R", 380.0));
             kSession.insert(new SensorReading(river, SensorType.FLOW_RATE, "FR_R", 3500.0));
