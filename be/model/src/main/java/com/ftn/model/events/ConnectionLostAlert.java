@@ -5,10 +5,8 @@ import java.util.Date;
 
 import org.kie.api.definition.type.Expires;
 import org.kie.api.definition.type.Role;
-import org.kie.api.definition.type.Timestamp;
 
 @Role(Role.Type.EVENT)
-@Timestamp("timestamp")
 @Expires("2h")
 public class ConnectionLostAlert implements Serializable {
 

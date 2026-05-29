@@ -37,8 +37,8 @@
         <ksession name="matchCancelledKsession"/>
     </kbase>
 
-    <kbase name="hydroKBase">
-        <ksession name="hydroKsession"/>
+    <kbase name="hydroKBase" eventProcessingMode="stream">
+        <ksession name="hydroKsession" clockType="realtime"/>
     </kbase>
 
 </kmodule>

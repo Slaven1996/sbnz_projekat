@@ -1,0 +1,114 @@
+import com.ftn.model.Location;
+import com.ftn.model.PumpOperationalStatus;
+import com.ftn.model.enums.SensorType;
+import com.ftn.model.enums.PumpEventType;
+import com.ftn.model.enums.PumpState;
+import com.ftn.model.events.SensorReadingEvent;
+import com.ftn.model.events.HeartbeatEvent;
+import com.ftn.model.events.PumpEvent;
+import com.ftn.model.events.RapidWaterLevelRise;
+import com.ftn.model.events.PumpFailureAlert;
+import com.ftn.model.events.ConnectionLostAlert;
+import com.ftn.model.events.PumpConnectionLostAlert;
+
+
+rule "CEP - Nagli porast vodostaja"
+    when
+        $r1: SensorReadingEvent(sensorType == SensorType.WATER_LEVEL,
+                                $loc: locationCode, $v1: value)
+        $r2: SensorReadingEvent(sensorType == SensorType.WATER_LEVEL,
+                                locationCode == $loc,
+                                this after[0s, 30m] $r1,
+                                value >= $v1 + 50)
+        not RapidWaterLevelRise(locationCode == $loc)
+    then
+        insert(new RapidWaterLevelRise($loc, $r2.getValue() - $v1, 30));
+end
+
+rule "CEP - Obrazac kvara pumpe"
+    when
+        $p1: PumpEvent(eventType == PumpEventType.RESTART,
+                       $loc: locationCode, $pumpId: pumpId)
+        Number(intValue >= 3) from accumulate(
+            PumpEvent(eventType == PumpEventType.RESTART,
+                      pumpId == $pumpId,
+                      this after[0s, 1h] $p1),
+            count(1))
+        not PumpFailureAlert(pumpId == $pumpId)
+    then
+        insert(new PumpFailureAlert($loc, $pumpId,
+            "Pumpa " + $pumpId + " restartovana vise od 3 puta u sat vremena"));
+end
+
+rule "CEP - Gubitak komunikacije"
+    when
+        $loc: Location($code: code)
+        not (HeartbeatEvent(locationCode == $code) over window:time(5m))
+        not ConnectionLostAlert(locationCode == $code)
+    then
+        insert(new ConnectionLostAlert($code,
+            "Nema komunikacije sa stanicom " + $code + " vise od 5 minuta"));
+end
+
+rule "CEP - Gubitak komunikacije sa pumpom"
+    when
+        $ps: PumpOperationalStatus($loc: location, $pumpId: pumpId)
+        not (SensorReadingEvent(sensorType == SensorType.PUMP_STATUS,
+                                locationCode == $loc.code,
+                                sensorName == $pumpId)
+             over window:time(10m))
+        not PumpConnectionLostAlert(locationCode == $loc.code, pumpId == $pumpId)
+    then
+        insert(new PumpConnectionLostAlert($loc.getCode(), $pumpId,
+            "Nema ocitavanja sa pumpe " + $pumpId
+            + " na lokaciji " + $loc.getCode() + " vise od 10 minuta"));
+end
+
+rule "CEP - Azuriranje stanja pumpe"
+    salience 200
+    when
+        $old: PumpOperationalStatus($pumpId: pumpId, $oldTs: timestamp)
+        exists PumpOperationalStatus(pumpId == $pumpId, timestamp > $oldTs)
+    then
+        retract($old);
+end
+
+rule "CEP - Kvar pumpe zbog stanja FAULTY"
+    when
+        $ps: PumpOperationalStatus(state == PumpState.FAULTY,
+                                   $loc: location, $pumpId: pumpId)
+        not PumpFailureAlert(pumpId == $pumpId)
+    then
+        insert(new PumpFailureAlert($loc.getCode(), $pumpId,
+            "Pumpa " + $pumpId + " je u stanju FAULTY"));
+end
+
+rule "CEP - Obnavljanje kvara pumpe"
+    when
+        $alert: PumpFailureAlert($code: locationCode, $pumpId: pumpId)
+        PumpOperationalStatus(state != PumpState.FAULTY,
+                              pumpId == $pumpId,
+                              timestamp > $alert.getTimestamp())
+    then
+        retract($alert);
+end
+
+rule "CEP - Obnavljanje komunikacije"
+    when
+        $alert: ConnectionLostAlert($code: locationCode)
+        HeartbeatEvent(locationCode == $code,
+                       this after $alert)
+    then
+        retract($alert);
+end
+
+rule "CEP - Obnavljanje komunikacije sa pumpom"
+    when
+        $alert: PumpConnectionLostAlert($code: locationCode, $pumpId: pumpId)
+        SensorReadingEvent(sensorType == SensorType.PUMP_STATUS,
+                            locationCode == $code,
+                            sensorName == $pumpId,
+                            this after $alert)
+    then
+        retract($alert);
+end
