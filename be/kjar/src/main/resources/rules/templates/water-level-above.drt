@@ -1,0 +1,30 @@
+template header
+locationType
+minValue
+statusLevel
+
+package rules.templates;
+
+import com.ftn.model.SensorReading;
+import com.ftn.model.WaterLevelStatus;
+import com.ftn.model.enums.SensorType;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.StatusLevel;
+
+template "water-level-above"
+
+rule "Nivo vode - @{locationType} @{statusLevel} [@{row.rowNumber - 1}]"
+    salience 100
+    no-loop true
+when
+    $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+                            $loc: location,
+                            location.type == LocationType.@{locationType},
+                            $val: value,
+                            value > @{minValue})
+    not WaterLevelStatus(location == $loc)
+then
+    insert(new WaterLevelStatus($loc, StatusLevel.@{statusLevel}, $val, $reading.getTimestamp()));
+end
+
+end template

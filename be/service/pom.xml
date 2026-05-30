@@ -15,6 +15,7 @@
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>11</java.version>
+		<drools.version>7.49.0.Final</drools.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -40,11 +41,14 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 
-		<!--
-		Drools 7.49 ships mvel2 2.4.12 whose AbstractParser static initializer
-		references java.lang.Compiler (removed in Java 9). Forcing 2.4.16 to
-		keep the engine runnable on Java 11+.
-		-->
+
+		<dependency>
+			<groupId>org.drools</groupId>
+			<artifactId>drools-decisiontables</artifactId>
+			<version>${drools.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.mvel</groupId>
 			<artifactId>mvel2</artifactId>
