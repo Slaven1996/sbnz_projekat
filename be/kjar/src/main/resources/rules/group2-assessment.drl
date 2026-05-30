@@ -195,7 +195,54 @@ rule "Kapacitet stanice - OFFLINE (<20% aktivnih)"
         insert(new StationCapacity($loc, CapacityLevel.OFFLINE, $a, $t));
 end
 
-rule "Azuriranje kapaciteta stanice - promjena aktivnih pumpi"
+/* rule "Azuriranje kapaciteta stanice - promjena aktivnih pumpi"
+ *     salience 50
+ *     when
+ *         $loc: Location(type == LocationType.PUMP_STATION)
+ *         Number($t: intValue, intValue > 0) from accumulate(
+ *             PumpOperationalStatus(location == $loc), count(1))
+ *         Number($a: intValue) from accumulate(
+ *             PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+ *             count(1))
+ *         $existing: StationCapacity(location == $loc, activePumps != $a)
+ *     then
+ *         double ratio = (double) $a / $t;
+ *         CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
+ *                                 : (ratio >= 0.5) ? CapacityLevel.REDUCED
+ *                                 : (ratio >= 0.2) ? CapacityLevel.MINIMAL
+ *                                 : CapacityLevel.OFFLINE;
+ *         modify($existing) {
+ *             setLevel(newLevel),
+ *             setActivePumps($a),
+ *             setTotalPumps($t)
+ *         };
+ * end
+ *
+ * rule "Azuriranje kapaciteta stanice - promjena ukupnog broja pumpi"
+ *     salience 50
+ *     when
+ *         $loc: Location(type == LocationType.PUMP_STATION)
+ *         Number($t: intValue, intValue > 0) from accumulate(
+ *             PumpOperationalStatus(location == $loc), count(1))
+ *         Number($a: intValue) from accumulate(
+ *             PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+ *             count(1))
+ *         $existing: StationCapacity(location == $loc, totalPumps != $t)
+ *     then
+ *         double ratio = (double) $a / $t;
+ *         CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
+ *                                 : (ratio >= 0.5) ? CapacityLevel.REDUCED
+ *                                 : (ratio >= 0.2) ? CapacityLevel.MINIMAL
+ *                                 : CapacityLevel.OFFLINE;
+ *         modify($existing) {
+ *             setLevel(newLevel),
+ *             setActivePumps($a),
+ *             setTotalPumps($t)
+ *         };
+ * end
+ */
+
+rule "Azuriranje kapaciteta stanice - FULL - promjena aktivnih pumpi"
     salience 50
     when
         $loc: Location(type == LocationType.PUMP_STATION)
@@ -204,21 +251,34 @@ rule "Azuriranje kapaciteta stanice - promjena aktivnih pumpi"
         Number($a: intValue) from accumulate(
             PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
             count(1))
+        eval((double) $a / $t >= 0.8)
         $existing: StationCapacity(location == $loc, activePumps != $a)
     then
-        double ratio = (double) $a / $t;
-        CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
-                                : (ratio >= 0.5) ? CapacityLevel.REDUCED
-                                : (ratio >= 0.2) ? CapacityLevel.MINIMAL
-                                : CapacityLevel.OFFLINE;
         modify($existing) {
-            setLevel(newLevel),
-            setActivePumps($a),
+            setLevel(CapacityLevel.FULL),
+            setActivePumps($a)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - FULL - promjena ukupnog broja pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.8)
+        $existing: StationCapacity(location == $loc, totalPumps != $t)
+    then
+        modify($existing) {
+            setLevel(CapacityLevel.FULL),
             setTotalPumps($t)
         };
 end
 
-rule "Azuriranje kapaciteta stanice - promjena ukupnog broja pumpi"
+rule "Azuriranje kapaciteta stanice - REDUCED - promjena aktivnih pumpi"
     salience 50
     when
         $loc: Location(type == LocationType.PUMP_STATION)
@@ -227,16 +287,105 @@ rule "Azuriranje kapaciteta stanice - promjena ukupnog broja pumpi"
         Number($a: intValue) from accumulate(
             PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
             count(1))
+        eval((double) $a / $t >= 0.5)
+        eval((double) $a / $t < 0.8)
+        $existing: StationCapacity(location == $loc, activePumps != $a)
+    then
+        modify($existing) {
+            setLevel(CapacityLevel.REDUCED),
+            setActivePumps($a)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - REDUCED - promjena ukupnog broja pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.5)
+        eval((double) $a / $t < 0.8)
         $existing: StationCapacity(location == $loc, totalPumps != $t)
     then
-        double ratio = (double) $a / $t;
-        CapacityLevel newLevel = (ratio >= 0.8) ? CapacityLevel.FULL
-                                : (ratio >= 0.5) ? CapacityLevel.REDUCED
-                                : (ratio >= 0.2) ? CapacityLevel.MINIMAL
-                                : CapacityLevel.OFFLINE;
         modify($existing) {
-            setLevel(newLevel),
-            setActivePumps($a),
+            setLevel(CapacityLevel.REDUCED),
+            setTotalPumps($t)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - MINIMAL - promjena aktivnih pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.2)
+        eval((double) $a / $t < 0.5)
+        $existing: StationCapacity(location == $loc, activePumps != $a)
+    then
+        modify($existing) {
+            setLevel(CapacityLevel.MINIMAL),
+            setActivePumps($a)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - MINIMAL - promjena ukupnog broja pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t >= 0.2)
+        eval((double) $a / $t < 0.5)
+        $existing: StationCapacity(location == $loc, totalPumps != $t)
+    then
+        modify($existing) {
+            setLevel(CapacityLevel.MINIMAL),
+            setTotalPumps($t)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - OFFLINE - promjena aktivnih pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t < 0.2)
+        $existing: StationCapacity(location == $loc, activePumps != $a)
+    then
+        modify($existing) {
+            setLevel(CapacityLevel.OFFLINE),
+            setActivePumps($a)
+        };
+end
+
+rule "Azuriranje kapaciteta stanice - OFFLINE - promjena ukupnog broja pumpi"
+    salience 50
+    when
+        $loc: Location(type == LocationType.PUMP_STATION)
+        Number($t: intValue, intValue > 0) from accumulate(
+            PumpOperationalStatus(location == $loc), count(1))
+        Number($a: intValue) from accumulate(
+            PumpOperationalStatus(location == $loc, state == PumpState.ACTIVE),
+            count(1))
+        eval((double) $a / $t < 0.2)
+        $existing: StationCapacity(location == $loc, totalPumps != $t)
+    then
+        modify($existing) {
+            setLevel(CapacityLevel.OFFLINE),
             setTotalPumps($t)
         };
 end
