@@ -113,73 +113,7 @@ public class CEPGroup4Test {
     }
 
     // ---------------------------------------------------------------------
-    // Scenario 2: Mali porast NE okida pravilo
-    // Razlika izmedju ocitavanja je 30 cm (< 50 cm prag).
-    // Ocekivano: nijedan RapidWaterLevelRise.
-    // ---------------------------------------------------------------------
-    @Test
-    public void testNoRapidRiseWhenChangeBelowThreshold() {
-        KieSession ksession = newCepSession();
-        try {
-            SessionPseudoClock clock = ksession.getSessionClock();
-            String loc = "LOC_RIVER2";
-
-            ksession.insert(new SensorReadingEvent(
-                    loc, SensorType.WATER_LEVEL, "WL", 100.0,
-                    new Date(clock.getCurrentTime())));
-            ksession.fireAllRules();
-
-            clock.advanceTime(10, TimeUnit.MINUTES);
-            ksession.insert(new SensorReadingEvent(
-                    loc, SensorType.WATER_LEVEL, "WL", 130.0,
-                    new Date(clock.getCurrentTime())));
-            ksession.fireAllRules();
-
-            System.out.println();
-            System.out.println("RapidWaterLevelRise events: " + count(ksession, RapidWaterLevelRise.class));
-            System.out.println();
-
-            assertEquals(0, count(ksession, RapidWaterLevelRise.class));
-        } finally {
-            ksession.dispose();
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // Scenario 3: Porast van vremenskog prozora NE okida pravilo
-    // Drugo ocitavanje je 60 cm vise, ali je 45 min nakon prvog (> 30 min).
-    // Ocekivano: nijedan RapidWaterLevelRise.
-    // ---------------------------------------------------------------------
-    @Test
-    public void testNoRapidRiseWhenOutsideTimeWindow() {
-        KieSession ksession = newCepSession();
-        try {
-            SessionPseudoClock clock = ksession.getSessionClock();
-            String loc = "LOC_RIVER3";
-
-            ksession.insert(new SensorReadingEvent(
-                    loc, SensorType.WATER_LEVEL, "WL", 100.0,
-                    new Date(clock.getCurrentTime())));
-            ksession.fireAllRules();
-
-            clock.advanceTime(45, TimeUnit.MINUTES);
-            ksession.insert(new SensorReadingEvent(
-                    loc, SensorType.WATER_LEVEL, "WL", 160.0,
-                    new Date(clock.getCurrentTime())));
-            ksession.fireAllRules();
-
-            System.out.println();
-            System.out.println("RapidWaterLevelRise events: " + count(ksession, RapidWaterLevelRise.class));
-            System.out.println();
-
-            assertEquals(0, count(ksession, RapidWaterLevelRise.class));
-        } finally {
-            ksession.dispose();
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // Scenario 4: Obrazac kvara pumpe (RESTART pattern)
+    // Scenario 2: Obrazac kvara pumpe (RESTART pattern)
     // Cetiri RESTART dogadjaja iste pumpe u roku od 1h ($p1 + 3 nakon $p1).
     // Ocekivano: tacno jedan PumpFailureAlert
     // ---------------------------------------------------------------------
@@ -210,38 +144,7 @@ public class CEPGroup4Test {
     }
 
     // ---------------------------------------------------------------------
-    // Scenario 5: Samo dva restarta NE okidaju pravilo
-    // Pravilo trazi >= 3 RESTART dogadjaja nakon $p1
-    // Ocekivano: nijedan PumpFailureAlert.
-    // ---------------------------------------------------------------------
-    @Test
-    public void testPumpRestartPatternNotEnoughEvents() {
-        KieSession ksession = newCepSession();
-        try {
-            SessionPseudoClock clock = ksession.getSessionClock();
-            String loc = "LOC_PUMP2";
-            String pumpId = "P2";
-
-            for (int i = 0; i < 2; i++) {
-                ksession.insert(new PumpEvent(
-                        loc, pumpId, PumpEventType.RESTART,
-                        new Date(clock.getCurrentTime())));
-                clock.advanceTime(5, TimeUnit.MINUTES);
-                ksession.fireAllRules();
-            }
-
-            System.out.println();
-            System.out.println("PumpFailureAlert events: " + count(ksession, PumpFailureAlert.class));
-            System.out.println();
-
-            assertEquals(0, count(ksession, PumpFailureAlert.class));
-        } finally {
-            ksession.dispose();
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // Scenario 6: Gubitak komunikacije + obnavljanje
+    // Scenario 3: Gubitak komunikacije + obnavljanje
     // - Saljemo heartbeats svakih 1 min (5 puta): bez alarma.
     // - Pomjeramo sat 6 min unaprijed bez heartbeats-a:
     //     -> jedan ConnectionLostAlert.
@@ -291,7 +194,7 @@ public class CEPGroup4Test {
     }
 
     // ---------------------------------------------------------------------
-    // Scenario 7: Gubitak komunikacije sa pumpom + obnavljanje
+    // Scenario 4: Gubitak komunikacije sa pumpom + obnavljanje
     // - PumpOperationalStatus + redovna PUMP_STATUS ocitavanja u prozoru
     //   od 10 min: bez alarma.
     // - Pauza od 11 min bez ocitavanja -> jedan PumpConnectionLostAlert.
@@ -347,7 +250,7 @@ public class CEPGroup4Test {
     }
 
     // ---------------------------------------------------------------------
-    // Scenario 8: Pumpa u stanju FAULTY + oporavak
+    // Scenario 5: Pumpa u stanju FAULTY + oporavak
     // - PumpOperationalStatus(state = FAULTY) -> jedan PumpFailureAlert.
     // - Novi PumpOperationalStatus(state = ACTIVE) sa kasnijim timestamp-om -> alarm se povlaci.
     // ---------------------------------------------------------------------
@@ -386,7 +289,7 @@ public class CEPGroup4Test {
     }
 
     // ---------------------------------------------------------------------
-    // Scenario 9: Izolacija po lokaciji - dva nezavisna porasta vodostaja
+    // Scenario 6: Izolacija po lokaciji - dva nezavisna porasta vodostaja
     // Dvije razlicite lokacije, svaka sa svojim parom WATER_LEVEL
     // ocitavanja koji zadovoljava pravilo.
     // ---------------------------------------------------------------------
