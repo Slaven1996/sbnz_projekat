@@ -70,7 +70,7 @@ rule "CEP - Azuriranje stanja pumpe"
         $old: PumpOperationalStatus($pumpId: pumpId, $oldTs: timestamp)
         exists PumpOperationalStatus(pumpId == $pumpId, timestamp > $oldTs)
     then
-        retract($old);
+        delete($old);
 end
 
 rule "CEP - Kvar pumpe zbog stanja FAULTY"
@@ -90,7 +90,7 @@ rule "CEP - Obnavljanje kvara pumpe"
                               pumpId == $pumpId,
                               timestamp > $alert.getTimestamp())
     then
-        retract($alert);
+        delete($alert);
 end
 
 rule "CEP - Obnavljanje komunikacije"
@@ -99,7 +99,7 @@ rule "CEP - Obnavljanje komunikacije"
         HeartbeatEvent(locationCode == $code,
                        this after $alert)
     then
-        retract($alert);
+        delete($alert);
 end
 
 rule "CEP - Obnavljanje komunikacije sa pumpom"
@@ -110,5 +110,5 @@ rule "CEP - Obnavljanje komunikacije sa pumpom"
                             sensorName == $pumpId,
                             this after $alert)
     then
-        retract($alert);
+        delete($alert);
 end
