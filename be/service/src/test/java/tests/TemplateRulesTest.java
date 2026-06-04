@@ -96,6 +96,10 @@ public class TemplateRulesTest {
             result.put(s.getLocation().getCode(), s.getLevel());
         }
 
+        for (String key : result.keySet()) {
+            System.out.println(key + ": " + result.get(key));
+        }
+
         assertEquals(8, result.size());
         assertEquals(StatusLevel.NORMAL,   result.get("RIVER_1"));
         assertEquals(StatusLevel.ELEVATED, result.get("RIVER_2"));
