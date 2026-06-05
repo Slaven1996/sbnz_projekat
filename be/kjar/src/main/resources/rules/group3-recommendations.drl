@@ -147,6 +147,54 @@ rule "Eskalacija preporuke - na ACTIVATE"
         };
 end
 
+rule "Deeskalacija preporuke - na PREPARE"
+    when
+        $loc: Location()
+        FloodRiskAssessment(location == $loc, riskLevel == RiskLevel.HIGH)
+        not StationCapacity(location == $loc, level == CapacityLevel.MINIMAL)
+        $rec: InterventionRecommendation(location == $loc,
+                                         type != ActionType.PREPARE,
+                                         type != ActionType.MONITOR)
+    then
+        modify($rec) {
+            setType(ActionType.PREPARE),
+            setPriority(Priority.HIGH),
+            setDescription("Deeskalacija - rizik opao na HIGH")
+        };
+end
+
+rule "Deeskalacija preporuke - na MONITOR"
+    when
+        $loc: Location()
+        FloodRiskAssessment(location == $loc, riskLevel == RiskLevel.MODERATE)
+        $rec: InterventionRecommendation(location == $loc, type != ActionType.MONITOR)
+    then
+        modify($rec) {
+            setType(ActionType.MONITOR),
+            setPriority(Priority.MEDIUM),
+            setDescription("Deeskalacija - rizik opao na MODERATE")
+        };
+end
+
+rule "Deeskalacija preporuke - uklanjanje pri niskom riziku"
+    when
+        $loc: Location()
+        FloodRiskAssessment(location == $loc, riskLevel == RiskLevel.LOW)
+        $rec: InterventionRecommendation(location == $loc, type != ActionType.MONITOR)
+    then
+        delete($rec);
+end
+
+rule "Deeskalacija preporuke - uklanjanje MONITOR pri niskom riziku"
+    when
+        $loc: Location()
+        FloodRiskAssessment(location == $loc, riskLevel == RiskLevel.LOW)
+        not StationCapacity(location == $loc, level == CapacityLevel.REDUCED)
+        $rec: InterventionRecommendation(location == $loc, type == ActionType.MONITOR)
+    then
+        delete($rec);
+end
+
 rule "Sistemsko upozorenje - GREEN"
     salience -10
     when
@@ -269,5 +317,60 @@ rule "Eskalacija sistemskog upozorenja - RED"
         modify($alert) {
             setLevel(AlertLevel.RED),
             setDescription("CRVENI ALARM - " + $cnt + " lokacija u vanrednom rezimu")
+        };
+end
+
+rule "Deeskalacija sistemskog upozorenja - ORANGE iz RED"
+    salience -10
+    when
+        $activateCount: Number() from accumulate(
+            InterventionRecommendation(type == ActionType.ACTIVATE), count(1))
+        $evacuateCount: Number() from accumulate(
+            InterventionRecommendation(type == ActionType.EVACUATE), count(1))
+        eval(($activateCount.intValue() + $evacuateCount.intValue()) >= 1
+          && ($activateCount.intValue() + $evacuateCount.intValue()) < 3)
+        $alert: SystemAlert(level == AlertLevel.RED)
+    then
+        int $count = $activateCount.intValue() + $evacuateCount.intValue();
+        modify($alert) {
+            setLevel(AlertLevel.ORANGE),
+            setDescription("NARANDZASTI ALARM - aktiviran vanredni rezim na "
+                + $count + " lokacija(e)")
+        };
+end
+
+rule "Deeskalacija sistemskog upozorenja - na YELLOW"
+    salience -10
+    when
+        Number(intValue == 0) from accumulate(
+            InterventionRecommendation(type == ActionType.ACTIVATE), count(1))
+        Number(intValue == 0) from accumulate(
+            InterventionRecommendation(type == ActionType.EVACUATE), count(1))
+        Number(intValue >= 1) from accumulate(
+            FloodRiskAssessment(riskLevel == RiskLevel.HIGH), count(1))
+        $alert: SystemAlert(level != AlertLevel.YELLOW, level != AlertLevel.GREEN)
+    then
+        modify($alert) {
+            setLevel(AlertLevel.YELLOW),
+            setDescription("ZUTI ALARM - jedna ili vise lokacija ima visok rizik")
+        };
+end
+
+rule "Deeskalacija sistemskog upozorenja - na GREEN"
+    salience -10
+    when
+        not FloodRiskAssessment(riskLevel == RiskLevel.HIGH)
+        not FloodRiskAssessment(riskLevel == RiskLevel.EXTREME)
+        Number(intValue == 0) from accumulate(
+            InterventionRecommendation(type == ActionType.PREPARE), count(1))
+        Number(intValue == 0) from accumulate(
+            InterventionRecommendation(type == ActionType.ACTIVATE), count(1))
+        Number(intValue == 0) from accumulate(
+            InterventionRecommendation(type == ActionType.EVACUATE), count(1))
+        $alert: SystemAlert(level != AlertLevel.GREEN)
+    then
+        modify($alert) {
+            setLevel(AlertLevel.GREEN),
+            setDescription("Sistem u normalnom stanju")
         };
 end
