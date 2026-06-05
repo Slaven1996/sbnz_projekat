@@ -6,9 +6,11 @@ import org.kie.api.runtime.KieContainer;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
+@EntityScan(basePackages = "com.ftn.model")
 public class Application implements CommandLineRunner {
 
     public static void main(String[] args) {
@@ -27,9 +29,9 @@ public class Application implements CommandLineRunner {
 		}
 		
 	@Override
-	public void run(String... args) throws Exception 
+	public void run(String... args) throws Exception
 	{
-		HydroMonitoringExamples.main(args);
+		// HydroMonitoringExamples.main(args);
 	}
 
 }
