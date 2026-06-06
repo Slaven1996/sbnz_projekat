@@ -1,21 +1,29 @@
 package com.ftn.model;
 
-import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.ftn.model.enums.UserRole;
 
 @Entity
 @Table(name = "users")
-public class User implements Serializable {
+public class User implements UserDetails {
 
     private static final long serialVersionUID = 1L;
 
@@ -35,12 +43,19 @@ public class User implements Serializable {
     @Column(name = "email", unique = true)
     private String email;
 
+    @Column(name = "password", nullable = false)
+    private String password;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
 
     @Column(name = "active", nullable = false)
     private boolean active = true;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     public User() {
     }
@@ -66,9 +81,38 @@ public class User implements Serializable {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
+
+    @Override
+    public String getPassword() { return password; }
+
+    public void setPassword(String password) { this.password = password; }
+
+    @Override
+    public String getUsername() { return email; }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+
+    @Override
+    public boolean isEnabled() { return active; }
+
     @Override
     public String toString() {
         return "User[id=" + id + ", userCode=" + userCode + ", name=" + name
-                + ", lastName=" + lastName + ", email=" + email + ", role=" + role + ", active=" + active + "]";
+                + ", lastName=" + lastName + ", email=" + email + ", role=" + role
+                + ", active=" + active + ", department=" + (department != null ? department.getCode() : "?") + "]";
     }
 }
