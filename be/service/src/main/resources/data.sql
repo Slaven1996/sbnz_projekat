@@ -9,6 +9,15 @@ INSERT IGNORE INTO users (name, last_name, email, password, role, active)
 VALUES ('Marko', 'Markovic', 'marko@hydro.local',
         '$2a$12$7w2SDeragadWiZRR5j7zBu4t18U.5g5YK/QLSx0FJJ6ycBtvz.UIy', 'OPERATOR', true);
 
+INSERT IGNORE INTO zones (code, name, description) VALUES
+    ('WBD', 'West Bačka District',    'Administrative seat: Sombor'),
+    ('NBD', 'North Bačka District',   'Administrative seat: Subotica'),
+    ('SBD', 'South Bačka District',   'Administrative seat: Novi Sad'),
+    ('NBN', 'North Banat District',   'Administrative seat: Kikinda'),
+    ('CBN', 'Central Banat District', 'Administrative seat: Zrenjanin'),
+    ('SBN', 'South Banat District',   'Administrative seat: Pančevo'),
+    ('SRD', 'Srem District',          'Administrative seat: Sremska Mitrovica');
+
 INSERT IGNORE INTO threshold_configs (location_type, parameter_type, normal_max, warning_max, critical_max) VALUES
     ('RIVER',        'WATER_LEVEL', 200, 350, 500),
     ('CANAL',        'WATER_LEVEL', 100, 180, 250),

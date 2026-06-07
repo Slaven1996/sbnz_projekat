@@ -45,7 +45,7 @@ export function ProfilePage() {
     enabled: userId != null,
   });
 
-  const fullName = [me?.name, me?.lastName].filter(Boolean).join(' ') || '—';
+  const fullName = [me?.name, me?.lastName].filter(Boolean).join(' ') || '-';
 
   return (
     <Box>
@@ -59,7 +59,7 @@ export function ProfilePage() {
               >
                 {(me?.name?.[0] ?? email?.[0] ?? '?').toUpperCase()}
               </Avatar>
-              <Typography variant="h6">{fullName !== '—' ? fullName : email}</Typography>
+              <Typography variant="h6">{fullName !== '-' ? fullName : email}</Typography>
               <Typography variant="body2" color="text.secondary">
                 {email}
               </Typography>
@@ -84,14 +84,14 @@ export function ProfilePage() {
                 </Box>
               ) : (
                 <Stack spacing={2} divider={<Divider flexItem />}>
-                  <InfoRow icon={<PersonIcon />} label="First name" value={me?.name || '—'} />
-                  <InfoRow icon={<PersonIcon />} label="Last name" value={me?.lastName || '—'} />
-                  <InfoRow icon={<EmailIcon />} label="E-mail" value={me?.email ?? email ?? '—'} />
-                  <InfoRow icon={<ShieldIcon />} label="Role" value={me?.role ?? role ?? '—'} />
+                  <InfoRow icon={<PersonIcon />} label="First name" value={me?.name || '-'} />
+                  <InfoRow icon={<PersonIcon />} label="Last name" value={me?.lastName || '-'} />
+                  <InfoRow icon={<EmailIcon />} label="E-mail" value={me?.email ?? email ?? '-'} />
+                  <InfoRow icon={<ShieldIcon />} label="Role" value={me?.role ?? role ?? '-'} />
                   <InfoRow
                     icon={<ApartmentIcon />}
                     label="Department"
-                    value={me?.departmentCode || '—'}
+                    value={me?.departmentCode || '-'}
                   />
                   <InfoRow
                     icon={<ToggleOnIcon />}
@@ -106,7 +106,7 @@ export function ProfilePage() {
                   <InfoRow
                     icon={<ScheduleIcon />}
                     label="Session expires"
-                    value={expiresAt ? new Date(expiresAt).toLocaleString() : '—'}
+                    value={expiresAt ? new Date(expiresAt).toLocaleString() : '-'}
                   />
                 </Stack>
               )}

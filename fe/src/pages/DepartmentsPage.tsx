@@ -49,7 +49,7 @@ export function DepartmentsPage() {
   const columns = useMemo<ColumnDef<DepartmentResponse, any>[]>(
     () => [
       { accessorKey: 'code', header: 'Code' },
-      { accessorKey: 'description', header: 'Description', cell: (c) => c.getValue() || '—' },
+      { accessorKey: 'description', header: 'Description', cell: (c) => c.getValue() || '-' },
     ],
     [],
   );

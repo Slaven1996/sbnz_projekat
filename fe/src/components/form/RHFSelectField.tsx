@@ -23,7 +23,7 @@ export function RHFSelectField<T extends FieldValues>({
   options,
   numeric,
   allowEmpty,
-  emptyLabel = '— none —',
+  emptyLabel = '- none -',
 }: Props<T>) {
   return (
     <Controller

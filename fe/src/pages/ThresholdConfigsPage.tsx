@@ -78,7 +78,7 @@ export function ThresholdConfigsPage() {
       { accessorKey: 'parameterType', header: 'Parameter' },
       { accessorKey: 'normalMax', header: 'Normal Max' },
       { accessorKey: 'warningMax', header: 'Warning Max' },
-      { accessorKey: 'criticalMax', header: 'Critical Max', cell: (c) => c.getValue() ?? '—' },
+      { accessorKey: 'criticalMax', header: 'Critical Max', cell: (c) => c.getValue() ?? '-' },
     ],
     [],
   );

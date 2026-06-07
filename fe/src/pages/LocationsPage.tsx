@@ -95,18 +95,18 @@ export function LocationsPage() {
     () => [
       { accessorKey: 'code', header: 'Code' },
       { accessorKey: 'type', header: 'Type' },
-      { accessorKey: 'zoneCode', header: 'Zone', enableSorting: false, cell: (c) => c.getValue() || '—' },
+      { accessorKey: 'zoneCode', header: 'Zone', enableSorting: false, cell: (c) => c.getValue() || '-' },
       {
         accessorKey: 'departmentCode',
         header: 'Department',
         enableSorting: false,
-        cell: (c) => c.getValue() || '—',
+        cell: (c) => c.getValue() || '-',
       },
       {
         id: 'precipitation',
         header: 'Precip.',
         enableSorting: false,
-        cell: (c) => c.row.original.weatherCondition?.precipitation ?? '—',
+        cell: (c) => c.row.original.weatherCondition?.precipitation ?? '-',
       },
       {
         accessorKey: 'active',
@@ -135,7 +135,7 @@ export function LocationsPage() {
     <Box>
       <PageHeader
         title="Locations"
-        subtitle="Monitoring sites — weather is managed here, not separately"
+        subtitle="Monitoring sites - weather is managed here, not separately"
         addLabel="Add Location"
         onAdd={isAdmin ? crud.openCreate : undefined}
       />
@@ -185,7 +185,10 @@ export function LocationsPage() {
           label="Zone"
           numeric
           allowEmpty
-          options={(zones ?? []).map((z) => ({ value: z.id, label: z.code }))}
+          options={(zones ?? []).map((z) => ({
+            value: z.id,
+            label: z.name ? `${z.code} - ${z.name}` : z.code,
+          }))}
         />
         <RHFTextField name="posX" control={control} label="Position X" type="number" />
         <RHFTextField name="posY" control={control} label="Position Y" type="number" />

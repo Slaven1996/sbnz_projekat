@@ -90,7 +90,7 @@ export function UsersPage() {
         id: 'fullName',
         header: 'Name',
         enableSorting: false,
-        cell: (c) => [c.row.original.name, c.row.original.lastName].filter(Boolean).join(' ') || '—',
+        cell: (c) => [c.row.original.name, c.row.original.lastName].filter(Boolean).join(' ') || '-',
       },
       { accessorKey: 'email', header: 'E-mail' },
       { accessorKey: 'role', header: 'Role' },
@@ -98,7 +98,7 @@ export function UsersPage() {
         accessorKey: 'departmentCode',
         header: 'Department',
         enableSorting: false,
-        cell: (c) => c.getValue() || '—',
+        cell: (c) => c.getValue() || '-',
       },
       {
         accessorKey: 'active',

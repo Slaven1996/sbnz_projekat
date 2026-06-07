@@ -1,4 +1,4 @@
-# Hydro Monitoring — Frontend
+# Hydro Monitoring - Frontend
 
 React + TypeScript SPA for the Hydro Monitoring Knowledge-Based System. It talks
 to the Spring Boot backend in [`be/service`](../be/service) (default
@@ -56,7 +56,7 @@ src/
 - **Data** is never kept in Redux. Every list/detail/mutation goes through React
   Query so caching and invalidation are automatic. `createCrudResource` builds a
   typed client + hooks (`useList`, `useOptions`, `useCreate`, `useUpdate`,
-  `useRemove`) for each backend controller — see [src/api/resources.ts](src/api/resources.ts).
+  `useRemove`) for each backend controller - see [src/api/resources.ts](src/api/resources.ts).
 - **RBAC in the UI** is driven by the role in Redux:
   - The sidebar renders only the tabs allowed for the role
     ([navConfig](src/layout/navConfig.tsx)).

@@ -45,6 +45,7 @@ public class ZoneService {
         }
         Zone z = new Zone();
         z.setCode(request.getCode());
+        z.setName(request.getName());
         z.setDescription(request.getDescription());
         return new ZoneResponse(repository.save(z));
     }
@@ -55,6 +56,7 @@ public class ZoneService {
             throw new DuplicateResourceException("Zone code already exists: " + request.getCode());
         }
         z.setCode(request.getCode());
+        z.setName(request.getName());
         z.setDescription(request.getDescription());
         return new ZoneResponse(repository.save(z));
     }

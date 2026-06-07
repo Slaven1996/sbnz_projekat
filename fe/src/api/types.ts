@@ -51,11 +51,13 @@ export interface DepartmentRequest {
 export interface ZoneResponse {
   id: number;
   code: string;
+  name: string | null;
   description: string | null;
   locationCount: number;
 }
 export interface ZoneRequest {
   code: string;
+  name?: string | null;
   description?: string | null;
 }
 

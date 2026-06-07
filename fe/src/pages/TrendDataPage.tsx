@@ -57,14 +57,14 @@ export function TrendDataPage() {
 
   const columns = useMemo<ColumnDef<TrendDataResponse, any>[]>(
     () => [
-      { accessorKey: 'locationCode', header: 'Location', cell: (c) => c.getValue() || '—' },
-      { accessorKey: 'tagName', header: 'Tag', cell: (c) => c.getValue() || '—' },
+      { accessorKey: 'locationCode', header: 'Location', cell: (c) => c.getValue() || '-' },
+      { accessorKey: 'tagName', header: 'Tag', cell: (c) => c.getValue() || '-' },
       {
         accessorKey: 'logTime',
         header: 'Log Time',
         cell: (c) => {
           const v = c.getValue() as string | null;
-          return v ? new Date(v).toLocaleString() : '—';
+          return v ? new Date(v).toLocaleString() : '-';
         },
       },
       { accessorKey: 'tagValue', header: 'Value', enableSorting: false },

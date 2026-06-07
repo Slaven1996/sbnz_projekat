@@ -17,11 +17,12 @@ import { useIsAdmin } from '@/store/hooks';
 
 const schema = z.object({
   code: z.string().min(1, 'Code is required').max(50),
+  name: z.string().max(100).optional().or(z.literal('')),
   description: z.string().max(255).optional().or(z.literal('')),
 });
 type FormValues = z.infer<typeof schema>;
 
-const emptyValues: FormValues = { code: '', description: '' };
+const emptyValues: FormValues = { code: '', name: '', description: '' };
 
 export function ZonesPage() {
   const isAdmin = useIsAdmin();
@@ -40,21 +41,34 @@ export function ZonesPage() {
 
   useEffect(() => {
     if (crud.formOpen) {
-      reset(crud.editing ? { code: crud.editing.code, description: crud.editing.description ?? '' } : emptyValues);
+      reset(
+        crud.editing
+          ? {
+              code: crud.editing.code,
+              name: crud.editing.name ?? '',
+              description: crud.editing.description ?? '',
+            }
+          : emptyValues,
+      );
     }
   }, [crud.formOpen, crud.editing, reset]);
 
   const columns = useMemo<ColumnDef<ZoneResponse, any>[]>(
     () => [
       { accessorKey: 'code', header: 'Code' },
-      { accessorKey: 'description', header: 'Description', cell: (c) => c.getValue() || '—' },
+      { accessorKey: 'name', header: 'Name', cell: (c) => c.getValue() || '-' },
+      { accessorKey: 'description', header: 'Description', cell: (c) => c.getValue() || '-' },
       { accessorKey: 'locationCount', header: 'Locations', enableSorting: false },
     ],
     [],
   );
 
   const onValid = (values: FormValues) =>
-    crud.submit({ code: values.code, description: values.description || null });
+    crud.submit({
+      code: values.code,
+      name: values.name || null,
+      description: values.description || null,
+    });
 
   return (
     <Box>
@@ -89,6 +103,7 @@ export function ZonesPage() {
         errorMessage={crud.submitError}
       >
         <RHFTextField name="code" control={control} label="Code" />
+        <RHFTextField name="name" control={control} label="Name" />
         <RHFTextField name="description" control={control} label="Description" multiline minRows={2} />
       </FormDialog>
 

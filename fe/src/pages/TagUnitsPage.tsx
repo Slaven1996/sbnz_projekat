@@ -55,7 +55,7 @@ export function TagUnitsPage() {
     () => [
       { accessorKey: 'code', header: 'Code' },
       { accessorKey: 'unit', header: 'Unit' },
-      { accessorKey: 'description', header: 'Description', cell: (c) => c.getValue() || '—' },
+      { accessorKey: 'description', header: 'Description', cell: (c) => c.getValue() || '-' },
     ],
     [],
   );
