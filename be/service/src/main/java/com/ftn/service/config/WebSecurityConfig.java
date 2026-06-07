@@ -10,7 +10,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -62,6 +61,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // send a 401 for unauthorized requests
                 .exceptionHandling().authenticationEntryPoint(restAuthenticationEntryPoint).and()
                 .authorizeRequests()
+                    .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .antMatchers(HttpMethod.POST, "/auth/change-password").authenticated()
+                    .antMatchers("/auth/**").permitAll()
                     .antMatchers("/api/users/**").hasAuthority("ADMIN")
                     .antMatchers(HttpMethod.GET, "/api/**").hasAnyAuthority("ADMIN", "OPERATOR")
                     .antMatchers(HttpMethod.POST, "/api/**").hasAuthority("ADMIN")
@@ -74,12 +76,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         BasicAuthenticationFilter.class);
 
         http.csrf().disable();
-    }
-
-    @Override
-    public void configure(WebSecurity web) {
-        web.ignoring().antMatchers(HttpMethod.POST, "/auth/login");
-        web.ignoring().antMatchers(HttpMethod.POST, "/auth/register");
     }
 
     @Bean

@@ -103,6 +103,15 @@ public class UserService {
         userRepository.delete(u);
     }
 
+    public void changePassword(Long id, String oldPassword, String newPassword) {
+        User u = getOrThrow(id);
+        if (!passwordEncoder.matches(oldPassword, u.getPassword())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+        u.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(u);
+    }
+
     private Department resolveDepartment(UserRequest request) {
         if (request.getDepartmentId() == null) {
             if (request.getRole() == UserRole.OPERATOR) {

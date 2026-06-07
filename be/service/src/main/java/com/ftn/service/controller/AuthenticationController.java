@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ftn.model.User;
+import com.ftn.service.dto.auth.ChangePasswordRequest;
 import com.ftn.service.dto.auth.UserTokenState;
 import com.ftn.service.dto.user.UserRequest;
 import com.ftn.service.dto.user.UserResponse;
@@ -63,5 +64,12 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        User current = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        userService.changePassword(current.getId(), request.getOldPassword(), request.getNewPassword());
+        return ResponseEntity.noContent().build();
     }
 }
