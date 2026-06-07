@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,17 @@ public class TrendDataService {
         List<TrendDataResponse> content = page.getContent().stream()
                 .map(TrendDataResponse::new).collect(Collectors.toList());
         return new PagedResponse<>(content, page);
+    }
+
+    public List<TrendDataResponse> searchAll(String locationCode, String tagName,
+                                             LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new BadRequestException("startDate must be before or equal to endDate");
+        }
+        return repository.searchAll(
+                emptyToNull(locationCode), emptyToNull(tagName), startDate, endDate,
+                Sort.by(Sort.Direction.ASC, "logTime"))
+                .stream().map(TrendDataResponse::new).collect(Collectors.toList());
     }
 
     public TrendDataResponse findById(Long id) {

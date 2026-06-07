@@ -6,7 +6,6 @@ import com.ftn.model.enums.UserRole;
 public class UserResponse {
 
     private Long id;
-    private String userCode;
     private String name;
     private String lastName;
     private String email;
@@ -20,7 +19,6 @@ public class UserResponse {
 
     public UserResponse(User u) {
         this.id = u.getId();
-        this.userCode = u.getUserCode();
         this.name = u.getName();
         this.lastName = u.getLastName();
         this.email = u.getEmail();
@@ -34,9 +32,6 @@ public class UserResponse {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
-    public String getUserCode() { return userCode; }
-    public void setUserCode(String userCode) { this.userCode = userCode; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

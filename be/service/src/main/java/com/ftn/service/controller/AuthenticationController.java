@@ -58,7 +58,7 @@ public class AuthenticationController {
         int expiresIn = tokenHelper.getExpiredIn();
         String authority = user.getRole().name();
 
-        return ResponseEntity.ok(new UserTokenState(jws, expiresIn, authority));
+        return ResponseEntity.ok(new UserTokenState(jws, expiresIn, authority, user.getId()));
     }
 
     @PostMapping("/register")

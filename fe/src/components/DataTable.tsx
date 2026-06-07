@@ -31,20 +31,17 @@ export interface DataTableProps<T> {
   columns: ColumnDef<T, any>[];
   data: T[];
   loading?: boolean;
-  // Server-side pagination state (0-based page).
   page: number;
   pageSize: number;
   totalElements: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
-  // Optional server-side sorting.
   sorting?: SortingState;
   onSortingChange?: OnChangeFn<SortingState>;
-  // Optional row actions — when provided, an "Actions" column is appended.
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
   emptyMessage?: string;
-  // Extra content rendered to the right of nothing — reserved for future use.
+  hidePagination?: boolean;
   toolbar?: ReactNode;
 }
 
@@ -62,6 +59,7 @@ export function DataTable<T>({
   onEdit,
   onDelete,
   emptyMessage = 'No records found',
+  hidePagination,
 }: DataTableProps<T>) {
   const hasActions = Boolean(onEdit || onDelete);
 
@@ -162,20 +160,22 @@ export function DataTable<T>({
           </TableBody>
         </Table>
       </TableContainer>
-      <Box sx={{ borderTop: 1, borderColor: 'divider' }}>
-        <TablePagination
-          component="div"
-          count={totalElements}
-          page={page}
-          onPageChange={(_e, newPage) => onPageChange(newPage)}
-          rowsPerPage={pageSize}
-          onRowsPerPageChange={(e) => {
-            onPageSizeChange(parseInt(e.target.value, 10));
-            onPageChange(0);
-          }}
-          rowsPerPageOptions={[5, 10, 20, 50]}
-        />
-      </Box>
+      {!hidePagination && (
+        <Box sx={{ borderTop: 1, borderColor: 'divider' }}>
+          <TablePagination
+            component="div"
+            count={totalElements}
+            page={page}
+            onPageChange={(_e, newPage) => onPageChange(newPage)}
+            rowsPerPage={pageSize}
+            onRowsPerPageChange={(e) => {
+              onPageSizeChange(parseInt(e.target.value, 10));
+              onPageChange(0);
+            }}
+            rowsPerPageOptions={[5, 10, 20, 50]}
+          />
+        </Box>
+      )}
     </Paper>
   );
 }

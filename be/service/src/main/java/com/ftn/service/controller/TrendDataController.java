@@ -1,6 +1,7 @@
 package com.ftn.service.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -33,6 +34,15 @@ public class TrendDataController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @PageableDefault(size = 50, sort = "logTime") Pageable pageable) {
         return service.search(locationCode, tagName, startDate, endDate, pageable);
+    }
+
+    @GetMapping(params = "paginated=false")
+    public List<TrendDataResponse> searchAll(
+            @RequestParam(required = false) String locationCode,
+            @RequestParam(required = false) String tagName,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+        return service.searchAll(locationCode, tagName, startDate, endDate);
     }
 
     @GetMapping("/{id}")

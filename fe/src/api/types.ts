@@ -35,6 +35,7 @@ export interface UserTokenState {
   access_token: string;
   expires_in: number;
   authority: string;
+  userId: number;
 }
 
 export interface DepartmentResponse {
@@ -148,7 +149,6 @@ export interface ThresholdConfigRequest {
 
 export interface UserResponse {
   id: number;
-  userCode: string;
   name: string | null;
   lastName: string | null;
   email: string;
@@ -159,7 +159,6 @@ export interface UserResponse {
 }
 
 export interface UserRequest {
-  userCode: string;
   name?: string | null;
   lastName?: string | null;
   email: string;

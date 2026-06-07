@@ -46,6 +46,14 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public PagedResponse<UserResponse> findAllExcept(Long excludeId, Pageable pageable) {
+        Page<User> page = userRepository.findByIdNot(excludeId, pageable);
+        List<UserResponse> content = page.getContent().stream()
+                .map(UserResponse::new).collect(Collectors.toList());
+        return new PagedResponse<>(content, page);
+    }
+
+    @Transactional(readOnly = true)
     public UserResponse findById(Long id) {
         return new UserResponse(getOrThrow(id));
     }
@@ -57,12 +65,8 @@ public class UserService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Email already in use: " + request.getEmail());
         }
-        if (userRepository.existsByUserCode(request.getUserCode())) {
-            throw new DuplicateResourceException("User code already in use: " + request.getUserCode());
-        }
 
         User u = new User();
-        u.setUserCode(request.getUserCode());
         u.setName(request.getName());
         u.setLastName(request.getLastName());
         u.setEmail(request.getEmail());
@@ -80,11 +84,7 @@ public class UserService {
         if (!u.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Email already in use: " + request.getEmail());
         }
-        if (!u.getUserCode().equals(request.getUserCode()) && userRepository.existsByUserCode(request.getUserCode())) {
-            throw new DuplicateResourceException("User code already in use: " + request.getUserCode());
-        }
 
-        u.setUserCode(request.getUserCode());
         u.setName(request.getName());
         u.setLastName(request.getLastName());
         u.setEmail(request.getEmail());

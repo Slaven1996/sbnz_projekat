@@ -9,10 +9,6 @@ import com.ftn.model.enums.UserRole;
 
 public class UserRequest {
 
-    @NotBlank
-    @Size(max = 50)
-    private String userCode;
-
     @Size(max = 100)
     private String name;
 
@@ -32,9 +28,6 @@ public class UserRequest {
     private Boolean active = true;
 
     private Long departmentId;
-
-    public String getUserCode() { return userCode; }
-    public void setUserCode(String userCode) { this.userCode = userCode; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

@@ -18,7 +18,6 @@ import { useCrudController } from '@/hooks/useCrudController';
 
 const schema = z
   .object({
-    userCode: z.string().min(1, 'User code is required').max(50),
     name: z.string().max(100).optional().or(z.literal('')),
     lastName: z.string().max(100).optional().or(z.literal('')),
     email: z.string().email('Enter a valid e-mail'),
@@ -42,7 +41,6 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 const emptyValues: FormValues = {
-  userCode: '',
   name: '',
   lastName: '',
   email: '',
@@ -53,7 +51,7 @@ const emptyValues: FormValues = {
 };
 
 export function UsersPage() {
-  const table = useTableState(10, [{ id: 'userCode', desc: false }]);
+  const table = useTableState(10, [{ id: 'email', desc: false }]);
   const { data, isFetching } = usersResource.useList({
     page: table.page,
     size: table.pageSize,
@@ -73,7 +71,6 @@ export function UsersPage() {
       reset(
         e
           ? {
-              userCode: e.userCode,
               name: e.name ?? '',
               lastName: e.lastName ?? '',
               email: e.email,
@@ -89,7 +86,6 @@ export function UsersPage() {
 
   const columns = useMemo<ColumnDef<UserResponse, any>[]>(
     () => [
-      { accessorKey: 'userCode', header: 'User Code' },
       {
         id: 'fullName',
         header: 'Name',
@@ -120,7 +116,6 @@ export function UsersPage() {
       return;
     }
     const body: UserRequest = {
-      userCode: v.userCode,
       name: v.name || null,
       lastName: v.lastName || null,
       email: v.email,
@@ -164,15 +159,21 @@ export function UsersPage() {
         submitting={crud.saving}
         errorMessage={crud.submitError}
       >
-        <RHFTextField name="userCode" control={control} label="User Code" />
-        <RHFTextField name="name" control={control} label="First Name" />
-        <RHFTextField name="lastName" control={control} label="Last Name" />
-        <RHFTextField name="email" control={control} label="E-mail" type="email" />
+        <RHFTextField name="name" control={control} label="First Name" autoComplete="off" />
+        <RHFTextField name="lastName" control={control} label="Last Name" autoComplete="off" />
+        <RHFTextField
+          name="email"
+          control={control}
+          label="E-mail"
+          type="email"
+          autoComplete="off"
+        />
         <RHFTextField
           name="password"
           control={control}
           label={crud.editing ? 'New Password (leave blank to keep)' : 'Password'}
           type="password"
+          autoComplete="new-password"
         />
         <RHFSelectField
           name="role"
@@ -193,7 +194,7 @@ export function UsersPage() {
 
       <ConfirmDialog
         open={Boolean(crud.deleteTarget)}
-        message={`Delete user "${crud.deleteTarget?.userCode}" (${crud.deleteTarget?.email})? This cannot be undone.`}
+        message={`Delete user "${crud.deleteTarget?.email}"? This cannot be undone.`}
         loading={crud.deleting}
         onConfirm={crud.confirmDelete}
         onClose={() => crud.setDeleteTarget(null)}

@@ -4,6 +4,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Divider,
   Grid,
   Stack,
@@ -13,6 +14,11 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import EmailIcon from '@mui/icons-material/Email';
 import ShieldIcon from '@mui/icons-material/Shield';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import PersonIcon from '@mui/icons-material/Person';
+import ApartmentIcon from '@mui/icons-material/Apartment';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import { useQuery } from '@tanstack/react-query';
+import { usersResource } from '@/api/resources';
 import { PageHeader } from '@/components/PageHeader';
 import { ChangePasswordCard } from '@/components/ChangePasswordCard';
 import { useAuth } from '@/store/hooks';
@@ -32,7 +38,14 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 }
 
 export function ProfilePage() {
-  const { email, role, expiresAt } = useAuth();
+  const { userId, email, role, expiresAt } = useAuth();
+  const { data: me, isLoading } = useQuery({
+    queryKey: ['users', userId],
+    queryFn: () => usersResource.api.get(userId as number),
+    enabled: userId != null,
+  });
+
+  const fullName = [me?.name, me?.lastName].filter(Boolean).join(' ') || '—';
 
   return (
     <Box>
@@ -44,9 +57,12 @@ export function ProfilePage() {
               <Avatar
                 sx={{ width: 80, height: 80, bgcolor: 'primary.main', mx: 'auto', mb: 2, fontSize: 32 }}
               >
-                {(email?.[0] ?? '?').toUpperCase()}
+                {(me?.name?.[0] ?? email?.[0] ?? '?').toUpperCase()}
               </Avatar>
-              <Typography variant="h6">{email}</Typography>
+              <Typography variant="h6">{fullName !== '—' ? fullName : email}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {email}
+              </Typography>
               <Chip
                 label={role ?? 'UNKNOWN'}
                 color={role === 'ADMIN' ? 'primary' : 'default'}
@@ -62,20 +78,38 @@ export function ProfilePage() {
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
                 Account details
               </Typography>
-              <Stack spacing={2} divider={<Divider flexItem />}>
-                <InfoRow icon={<EmailIcon />} label="E-mail" value={email ?? '—'} />
-                <InfoRow icon={<ShieldIcon />} label="Role" value={role ?? '—'} />
-                <InfoRow
-                  icon={<BadgeIcon />}
-                  label="Access level"
-                  value={role === 'ADMIN' ? 'Full management (create/edit/delete)' : 'Read-only'}
-                />
-                <InfoRow
-                  icon={<ScheduleIcon />}
-                  label="Session expires"
-                  value={expiresAt ? new Date(expiresAt).toLocaleString() : '—'}
-                />
-              </Stack>
+              {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : (
+                <Stack spacing={2} divider={<Divider flexItem />}>
+                  <InfoRow icon={<PersonIcon />} label="First name" value={me?.name || '—'} />
+                  <InfoRow icon={<PersonIcon />} label="Last name" value={me?.lastName || '—'} />
+                  <InfoRow icon={<EmailIcon />} label="E-mail" value={me?.email ?? email ?? '—'} />
+                  <InfoRow icon={<ShieldIcon />} label="Role" value={me?.role ?? role ?? '—'} />
+                  <InfoRow
+                    icon={<ApartmentIcon />}
+                    label="Department"
+                    value={me?.departmentCode || '—'}
+                  />
+                  <InfoRow
+                    icon={<ToggleOnIcon />}
+                    label="Status"
+                    value={me?.active ? 'Active' : 'Inactive'}
+                  />
+                  <InfoRow
+                    icon={<BadgeIcon />}
+                    label="Access level"
+                    value={role === 'ADMIN' ? 'Full management (create/edit/delete)' : 'Read-only'}
+                  />
+                  <InfoRow
+                    icon={<ScheduleIcon />}
+                    label="Session expires"
+                    value={expiresAt ? new Date(expiresAt).toLocaleString() : '—'}
+                  />
+                </Stack>
+              )}
             </CardContent>
           </Card>
         </Grid>
