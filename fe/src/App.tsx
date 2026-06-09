@@ -3,6 +3,7 @@ import { MainLayout } from '@/layout/MainLayout';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { RoleRoute } from '@/routes/RoleRoute';
 import { LoginPage } from '@/pages/LoginPage';
+import { HistoricalTrendsPage } from '@/pages/HistoricalTrendsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { DepartmentsPage } from '@/pages/DepartmentsPage';
 import { ZonesPage } from '@/pages/ZonesPage';
@@ -21,7 +22,8 @@ export default function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/departments" replace />} />
+          <Route index element={<Navigate to="/historical-trends" replace />} />
+          <Route path="historical-trends" element={<HistoricalTrendsPage />} />
           <Route path="departments" element={<DepartmentsPage />} />
           <Route path="zones" element={<ZonesPage />} />
           <Route path="locations" element={<LocationsPage />} />

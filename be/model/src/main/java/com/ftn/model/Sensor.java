@@ -56,9 +56,6 @@ public class Sensor implements Serializable {
     @Column(name = "raw_high")
     private Double rawHigh;
 
-    @Column(name = "log_interval")
-    private Integer logInterval;
-
     public Sensor() {
     }
 
@@ -91,9 +88,6 @@ public class Sensor implements Serializable {
 
     public Double getRawHigh() { return rawHigh; }
     public void setRawHigh(Double rawHigh) { this.rawHigh = rawHigh; }
-
-    public Integer getLogInterval() { return logInterval; }
-    public void setLogInterval(Integer logInterval) { this.logInterval = logInterval; }
 
     @Override
     public String toString() {

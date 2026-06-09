@@ -17,7 +17,6 @@ public class SensorResponse {
     private Double engHigh;
     private Double rawLow;
     private Double rawHigh;
-    private Integer logInterval;
 
     public SensorResponse() {
     }
@@ -39,7 +38,6 @@ public class SensorResponse {
         this.engHigh = s.getEngHigh();
         this.rawLow = s.getRawLow();
         this.rawHigh = s.getRawHigh();
-        this.logInterval = s.getLogInterval();
     }
 
     public Long getId() { return id; }
@@ -77,7 +75,4 @@ public class SensorResponse {
 
     public Double getRawHigh() { return rawHigh; }
     public void setRawHigh(Double rawHigh) { this.rawHigh = rawHigh; }
-
-    public Integer getLogInterval() { return logInterval; }
-    public void setLogInterval(Integer logInterval) { this.logInterval = logInterval; }
 }

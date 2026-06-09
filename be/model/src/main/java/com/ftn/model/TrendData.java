@@ -37,9 +37,6 @@ public class TrendData implements Serializable {
     @Column(name = "tag_value", nullable = false)
     private double tagValue;
 
-    @Column(name = "valid", nullable = false)
-    private boolean valid = true;
-
     public TrendData() {
     }
 
@@ -58,13 +55,10 @@ public class TrendData implements Serializable {
     public double getTagValue() { return tagValue; }
     public void setTagValue(double tagValue) { this.tagValue = tagValue; }
 
-    public boolean isValid() { return valid; }
-    public void setValid(boolean valid) { this.valid = valid; }
-
     @Override
     public String toString() {
         return "TrendData[id=" + id + ", locationCode=" + locationCode
                 + ", tagName=" + tagName + ", logTime=" + logTime
-                + ", tagValue=" + tagValue + ", valid=" + valid + "]";
+                + ", tagValue=" + tagValue + "]";
     }
 }

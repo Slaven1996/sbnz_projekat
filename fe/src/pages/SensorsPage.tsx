@@ -26,7 +26,6 @@ const schema = z.object({
   engHigh: z.number().nullable().optional(),
   rawLow: z.number().nullable().optional(),
   rawHigh: z.number().nullable().optional(),
-  logInterval: z.number().nullable().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -40,7 +39,6 @@ const emptyValues: Partial<FormValues> = {
   engHigh: null,
   rawLow: null,
   rawHigh: null,
-  logInterval: null,
 };
 
 export function SensorsPage() {
@@ -77,7 +75,6 @@ export function SensorsPage() {
               engHigh: e.engHigh,
               rawLow: e.rawLow,
               rawHigh: e.rawHigh,
-              logInterval: e.logInterval,
             }
           : (emptyValues as FormValues),
       );
@@ -95,12 +92,6 @@ export function SensorsPage() {
         cell: (c) => c.getValue() || '-',
       },
       { accessorKey: 'unitCode', header: 'Unit', enableSorting: false, cell: (c) => c.getValue() || '-' },
-      {
-        accessorKey: 'logInterval',
-        header: 'Log Interval',
-        enableSorting: false,
-        cell: (c) => c.getValue() ?? '-',
-      },
     ],
     [],
   );
@@ -116,7 +107,6 @@ export function SensorsPage() {
       engHigh: v.engHigh ?? null,
       rawLow: v.rawLow ?? null,
       rawHigh: v.rawHigh ?? null,
-      logInterval: v.logInterval ?? null,
     });
 
   return (
@@ -178,7 +168,6 @@ export function SensorsPage() {
         <RHFTextField name="engHigh" control={control} label="Eng High" type="number" />
         <RHFTextField name="rawLow" control={control} label="Raw Low" type="number" />
         <RHFTextField name="rawHigh" control={control} label="Raw High" type="number" />
-        <RHFTextField name="logInterval" control={control} label="Log Interval (s)" type="number" />
       </FormDialog>
 
       <ConfirmDialog

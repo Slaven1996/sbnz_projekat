@@ -81,7 +81,6 @@ public class SensorService {
         s.setEngHigh(request.getEngHigh());
         s.setRawLow(request.getRawLow());
         s.setRawHigh(request.getRawHigh());
-        s.setLogInterval(request.getLogInterval());
     }
 
     private Location resolveLocation(Long locationId) {

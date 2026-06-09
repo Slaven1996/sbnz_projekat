@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   Box,
   Button,
-  Chip,
   FormControlLabel,
   Grid,
   Paper,
@@ -68,17 +67,6 @@ export function TrendDataPage() {
         },
       },
       { accessorKey: 'tagValue', header: 'Value', enableSorting: false },
-      {
-        accessorKey: 'valid',
-        header: 'Valid',
-        enableSorting: false,
-        cell: (c) =>
-          c.getValue() ? (
-            <Chip size="small" color="success" label="Valid" />
-          ) : (
-            <Chip size="small" color="warning" label="Invalid" />
-          ),
-      },
     ],
     [],
   );

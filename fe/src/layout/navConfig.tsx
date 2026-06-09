@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import PlaceIcon from '@mui/icons-material/Place';
 import MapIcon from '@mui/icons-material/Map';
 import SensorsIcon from '@mui/icons-material/Sensors';
@@ -18,6 +19,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { label: 'Historical Trends', path: '/historical-trends', icon: <TimelineIcon /> },
   { label: 'Departments', path: '/departments', icon: <DashboardIcon /> },
   { label: 'Zones', path: '/zones', icon: <MapIcon /> },
   { label: 'Locations', path: '/locations', icon: <PlaceIcon /> },

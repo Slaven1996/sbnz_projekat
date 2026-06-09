@@ -11,7 +11,6 @@ public class TrendDataResponse {
     private String tagName;
     private LocalDateTime logTime;
     private double tagValue;
-    private boolean valid;
 
     public TrendDataResponse() {
     }
@@ -22,7 +21,6 @@ public class TrendDataResponse {
         this.tagName = t.getTagName();
         this.logTime = t.getLogTime();
         this.tagValue = t.getTagValue();
-        this.valid = t.isValid();
     }
 
     public Long getId() { return id; }
@@ -39,7 +37,4 @@ public class TrendDataResponse {
 
     public double getTagValue() { return tagValue; }
     public void setTagValue(double tagValue) { this.tagValue = tagValue; }
-
-    public boolean isValid() { return valid; }
-    public void setValid(boolean valid) { this.valid = valid; }
 }

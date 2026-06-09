@@ -118,7 +118,6 @@ export interface SensorResponse {
   engHigh: number | null;
   rawLow: number | null;
   rawHigh: number | null;
-  logInterval: number | null;
 }
 export interface SensorRequest {
   locationId: number;
@@ -130,7 +129,6 @@ export interface SensorRequest {
   engHigh?: number | null;
   rawLow?: number | null;
   rawHigh?: number | null;
-  logInterval?: number | null;
 }
 
 export interface ThresholdConfigResponse {
@@ -176,7 +174,6 @@ export interface TrendDataResponse {
   tagName: string | null;
   logTime: string | null;
   tagValue: number;
-  valid: boolean;
 }
 
 export interface TrendDataSearchParams extends PageParams {
@@ -184,6 +181,53 @@ export interface TrendDataSearchParams extends PageParams {
   tagName?: string;
   startDate?: string;
   endDate?: string;
+}
+
+export type StepUnit = 'HOUR' | 'DAY';
+
+export interface SimulationLocationState {
+  locationCode: string;
+  locationType: string | null;
+  zoneCode: string | null;
+  waterLevel: string | null;
+  waterValue: number | null;
+  flowLevel: string | null;
+  flowValue: number | null;
+  capacityLevel: string | null;
+  activePumps: number | null;
+  totalPumps: number | null;
+  riskLevel: string | null;
+  riskReason: string | null;
+  recommendation: string | null;
+  recommendationPriority: string | null;
+  recommendationDescription: string | null;
+}
+
+export interface SimulationTimelineEvent {
+  stepTime: string;
+  firedRules: number;
+  appliedReadings: string[];
+  changes: string[];
+  locationStates: SimulationLocationState[];
+  systemAlertLevel: string | null;
+  systemAlertDescription: string | null;
+}
+
+export interface SimulationResult {
+  startDate: string;
+  endDate: string;
+  stepUnit: string;
+  totalReadings: number;
+  stepCount: number;
+  locationsInvolved: string[];
+  timeline: SimulationTimelineEvent[];
+}
+
+export interface SimulationParams {
+  startDate: string;
+  endDate: string;
+  locationCode?: string;
+  step?: StepUnit;
 }
 
 export interface ApiError {

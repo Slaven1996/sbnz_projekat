@@ -27,7 +27,6 @@ public class SensorRequest {
     private Double engHigh;
     private Double rawLow;
     private Double rawHigh;
-    private Integer logInterval;
 
     public Long getLocationId() { return locationId; }
     public void setLocationId(Long locationId) { this.locationId = locationId; }
@@ -55,7 +54,4 @@ public class SensorRequest {
 
     public Double getRawHigh() { return rawHigh; }
     public void setRawHigh(Double rawHigh) { this.rawHigh = rawHigh; }
-
-    public Integer getLogInterval() { return logInterval; }
-    public void setLogInterval(Integer logInterval) { this.logInterval = logInterval; }
 }

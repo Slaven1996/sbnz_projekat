@@ -12,57 +12,59 @@ import com.ftn.model.FlowRateStatus;
 import com.ftn.model.PumpOperationalStatus;
 
 
-rule "Klasifikacija nivoa vode - NORMAL"
-    salience 100
-    when
-        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
-                                $loc: location, $val: value)
-        $thresh: ThresholdConfig(locationType == $loc.type,
-                                 parameterType == ParameterType.WATER_LEVEL,
-                                 normalMax >= $val)
-        not WaterLevelStatus(location == $loc)
-    then
-        insert(new WaterLevelStatus($loc, StatusLevel.NORMAL, $val, $reading.getTimestamp()));
-end
-
-rule "Klasifikacija nivoa vode - ELEVATED"
-    salience 100
-    when
-        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
-                                $loc: location, $val: value)
-        $thresh: ThresholdConfig(locationType == $loc.type,
-                                 parameterType == ParameterType.WATER_LEVEL,
-                                 normalMax < $val, warningMax >= $val)
-        not WaterLevelStatus(location == $loc)
-    then
-        insert(new WaterLevelStatus($loc, StatusLevel.ELEVATED, $val, $reading.getTimestamp()));
-end
-
-rule "Klasifikacija nivoa vode - HIGH"
-    salience 100
-    when
-        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
-                                $loc: location, $val: value)
-        $thresh: ThresholdConfig(locationType == $loc.type,
-                                 parameterType == ParameterType.WATER_LEVEL,
-                                 warningMax < $val, criticalMax >= $val)
-        not WaterLevelStatus(location == $loc)
-    then
-        insert(new WaterLevelStatus($loc, StatusLevel.HIGH, $val, $reading.getTimestamp()));
-end
-
-rule "Klasifikacija nivoa vode - CRITICAL"
-    salience 100
-    when
-        $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
-                                $loc: location, $val: value)
-        $thresh: ThresholdConfig(locationType == $loc.type,
-                                 parameterType == ParameterType.WATER_LEVEL,
-                                 criticalMax < $val)
-        not WaterLevelStatus(location == $loc)
-    then
-        insert(new WaterLevelStatus($loc, StatusLevel.CRITICAL, $val, $reading.getTimestamp()));
-end
+/*
+ * rule "Klasifikacija nivoa vode - NORMAL"
+ *     salience 100
+ *     when
+ *         $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+ *                                 $loc: location, $val: value)
+ *         $thresh: ThresholdConfig(locationType == $loc.type,
+ *                                  parameterType == ParameterType.WATER_LEVEL,
+ *                                  normalMax >= $val)
+ *         not WaterLevelStatus(location == $loc)
+ *     then
+ *         insert(new WaterLevelStatus($loc, StatusLevel.NORMAL, $val, $reading.getTimestamp()));
+ * end
+ *
+ * rule "Klasifikacija nivoa vode - ELEVATED"
+ *     salience 100
+ *     when
+ *         $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+ *                                 $loc: location, $val: value)
+ *         $thresh: ThresholdConfig(locationType == $loc.type,
+ *                                  parameterType == ParameterType.WATER_LEVEL,
+ *                                  normalMax < $val, warningMax >= $val)
+ *         not WaterLevelStatus(location == $loc)
+ *     then
+ *         insert(new WaterLevelStatus($loc, StatusLevel.ELEVATED, $val, $reading.getTimestamp()));
+ * end
+ *
+ * rule "Klasifikacija nivoa vode - HIGH"
+ *     salience 100
+ *     when
+ *         $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+ *                                 $loc: location, $val: value)
+ *         $thresh: ThresholdConfig(locationType == $loc.type,
+ *                                  parameterType == ParameterType.WATER_LEVEL,
+ *                                  warningMax < $val, criticalMax >= $val)
+ *         not WaterLevelStatus(location == $loc)
+ *     then
+ *         insert(new WaterLevelStatus($loc, StatusLevel.HIGH, $val, $reading.getTimestamp()));
+ * end
+ *
+ * rule "Klasifikacija nivoa vode - CRITICAL"
+ *     salience 100
+ *     when
+ *         $reading: SensorReading(sensorType == SensorType.WATER_LEVEL,
+ *                                 $loc: location, $val: value)
+ *         $thresh: ThresholdConfig(locationType == $loc.type,
+ *                                  parameterType == ParameterType.WATER_LEVEL,
+ *                                  criticalMax < $val)
+ *         not WaterLevelStatus(location == $loc)
+ *     then
+ *         insert(new WaterLevelStatus($loc, StatusLevel.CRITICAL, $val, $reading.getTimestamp()));
+ * end
+ */
 
 rule "Azuriranje nivoa vode - NORMAL"
     salience 100
