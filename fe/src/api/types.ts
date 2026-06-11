@@ -41,10 +41,12 @@ export interface UserTokenState {
 export interface DepartmentResponse {
   id: number;
   code: string;
+  name: string | null;
   description: string | null;
 }
 export interface DepartmentRequest {
   code: string;
+  name?: string | null;
   description?: string | null;
 }
 
@@ -87,8 +89,6 @@ export interface LocationResponse {
   active: boolean;
   posX: number | null;
   posY: number | null;
-  departmentId: number | null;
-  departmentCode: string | null;
   zoneId: number | null;
   zoneCode: string | null;
   weatherCondition: WeatherConditionDto | null;
@@ -97,7 +97,6 @@ export interface LocationRequest {
   code: string;
   displayCode?: string | null;
   type: LocationType;
-  departmentId?: number | null;
   zoneId?: number | null;
   posX?: number | null;
   posY?: number | null;
@@ -114,10 +113,6 @@ export interface SensorResponse {
   locationCode: string | null;
   unitId: number | null;
   unitCode: string | null;
-  engLow: number | null;
-  engHigh: number | null;
-  rawLow: number | null;
-  rawHigh: number | null;
 }
 export interface SensorRequest {
   locationId: number;
@@ -125,10 +120,6 @@ export interface SensorRequest {
   displayCode?: string | null;
   sensorType: SensorType;
   unitId?: number | null;
-  engLow?: number | null;
-  engHigh?: number | null;
-  rawLow?: number | null;
-  rawHigh?: number | null;
 }
 
 export interface ThresholdConfigResponse {
@@ -156,6 +147,7 @@ export interface UserResponse {
   active: boolean;
   departmentId: number | null;
   departmentCode: string | null;
+  departmentName: string | null;
 }
 
 export interface UserRequest {

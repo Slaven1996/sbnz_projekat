@@ -20,7 +20,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Historical Trends', path: '/historical-trends', icon: <TimelineIcon /> },
-  { label: 'Departments', path: '/departments', icon: <DashboardIcon /> },
+  { label: 'Departments', path: '/departments', icon: <DashboardIcon />, roles: ['ADMIN'] },
   { label: 'Zones', path: '/zones', icon: <MapIcon /> },
   { label: 'Locations', path: '/locations', icon: <PlaceIcon /> },
   { label: 'Sensors', path: '/sensors', icon: <SensorsIcon /> },

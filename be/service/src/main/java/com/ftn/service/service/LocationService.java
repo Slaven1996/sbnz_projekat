@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ftn.model.Department;
 import com.ftn.model.Location;
 import com.ftn.model.WeatherCondition;
 import com.ftn.model.Zone;
@@ -19,7 +18,6 @@ import com.ftn.service.dto.location.LocationResponse;
 import com.ftn.service.dto.location.WeatherConditionDto;
 import com.ftn.service.exception.DuplicateResourceException;
 import com.ftn.service.exception.ResourceNotFoundException;
-import com.ftn.service.repository.DepartmentRepository;
 import com.ftn.service.repository.LocationRepository;
 import com.ftn.service.repository.WeatherConditionRepository;
 import com.ftn.service.repository.ZoneRepository;
@@ -29,14 +27,12 @@ import com.ftn.service.repository.ZoneRepository;
 public class LocationService {
 
     private final LocationRepository locationRepository;
-    private final DepartmentRepository departmentRepository;
     private final ZoneRepository zoneRepository;
     private final WeatherConditionRepository weatherRepository;
 
-    public LocationService(LocationRepository locationRepository, DepartmentRepository departmentRepository,
+    public LocationService(LocationRepository locationRepository,
                            ZoneRepository zoneRepository, WeatherConditionRepository weatherRepository) {
         this.locationRepository = locationRepository;
-        this.departmentRepository = departmentRepository;
         this.zoneRepository = zoneRepository;
         this.weatherRepository = weatherRepository;
     }
@@ -60,7 +56,6 @@ public class LocationService {
         }
         Location l = new Location();
         applyScalarFields(l, request);
-        l.setDepartment(resolveDepartment(request.getDepartmentId()));
         l.setZone(resolveZone(request.getZoneId()));
         Location saved = locationRepository.save(l);
 
@@ -74,7 +69,6 @@ public class LocationService {
             throw new DuplicateResourceException("Location code already exists: " + request.getCode());
         }
         applyScalarFields(l, request);
-        l.setDepartment(resolveDepartment(request.getDepartmentId()));
         l.setZone(resolveZone(request.getZoneId()));
         Location saved = locationRepository.save(l);
 
@@ -111,14 +105,6 @@ public class LocationService {
         weather.setPrecipitation(dto.getPrecipitation());
         weather.setLastUpdate(LocalDateTime.now());
         location.setWeatherCondition(weatherRepository.save(weather));
-    }
-
-    private Department resolveDepartment(Long departmentId) {
-        if (departmentId == null) {
-            return null;
-        }
-        return departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Department", departmentId));
     }
 
     private Zone resolveZone(Long zoneId) {

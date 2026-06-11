@@ -77,10 +77,6 @@ public class SensorService {
         s.setTagName(request.getTagName());
         s.setDisplayCode(request.getDisplayCode());
         s.setSensorType(request.getSensorType());
-        s.setEngLow(request.getEngLow());
-        s.setEngHigh(request.getEngHigh());
-        s.setRawLow(request.getRawLow());
-        s.setRawHigh(request.getRawHigh());
     }
 
     private Location resolveLocation(Long locationId) {

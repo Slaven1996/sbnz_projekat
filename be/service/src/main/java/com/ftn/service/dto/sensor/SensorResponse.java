@@ -13,10 +13,6 @@ public class SensorResponse {
     private String locationCode;
     private Long unitId;
     private String unitCode;
-    private Double engLow;
-    private Double engHigh;
-    private Double rawLow;
-    private Double rawHigh;
 
     public SensorResponse() {
     }
@@ -34,10 +30,6 @@ public class SensorResponse {
             this.unitId = s.getUnit().getId();
             this.unitCode = s.getUnit().getCode();
         }
-        this.engLow = s.getEngLow();
-        this.engHigh = s.getEngHigh();
-        this.rawLow = s.getRawLow();
-        this.rawHigh = s.getRawHigh();
     }
 
     public Long getId() { return id; }
@@ -63,16 +55,4 @@ public class SensorResponse {
 
     public String getUnitCode() { return unitCode; }
     public void setUnitCode(String unitCode) { this.unitCode = unitCode; }
-
-    public Double getEngLow() { return engLow; }
-    public void setEngLow(Double engLow) { this.engLow = engLow; }
-
-    public Double getEngHigh() { return engHigh; }
-    public void setEngHigh(Double engHigh) { this.engHigh = engHigh; }
-
-    public Double getRawLow() { return rawLow; }
-    public void setRawLow(Double rawLow) { this.rawLow = rawLow; }
-
-    public Double getRawHigh() { return rawHigh; }
-    public void setRawHigh(Double rawHigh) { this.rawHigh = rawHigh; }
 }

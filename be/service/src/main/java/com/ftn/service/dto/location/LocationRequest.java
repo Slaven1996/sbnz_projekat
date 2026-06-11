@@ -19,8 +19,6 @@ public class LocationRequest {
     @NotNull
     private LocationType type;
 
-    private Long departmentId;
-
     private Long zoneId;
 
     private Double posX;
@@ -40,9 +38,6 @@ public class LocationRequest {
 
     public LocationType getType() { return type; }
     public void setType(LocationType type) { this.type = type; }
-
-    public Long getDepartmentId() { return departmentId; }
-    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
 
     public Long getZoneId() { return zoneId; }
     public void setZoneId(Long zoneId) { this.zoneId = zoneId; }

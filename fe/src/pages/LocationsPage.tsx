@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { ColumnDef } from '@tanstack/react-table';
-import { departmentsResource, locationsResource, zonesResource } from '@/api/resources';
+import { locationsResource, zonesResource } from '@/api/resources';
 import { LOCATION_TYPES, type LocationRequest, type LocationResponse } from '@/api/types';
 import { PageHeader } from '@/components/PageHeader';
 import { DataTable } from '@/components/DataTable';
@@ -22,7 +22,6 @@ const schema = z
     code: z.string().min(1, 'Code is required').max(50),
     displayCode: z.string().max(50).optional().or(z.literal('')),
     type: z.enum(['RIVER', 'CANAL', 'RESERVOIR', 'PUMP_STATION']),
-    departmentId: z.number().nullable().optional(),
     zoneId: z.number().nullable().optional(),
     posX: z.number().nullable().optional(),
     posY: z.number().nullable().optional(),
@@ -40,7 +39,6 @@ const emptyValues: FormValues = {
   code: '',
   displayCode: '',
   type: 'RIVER',
-  departmentId: null,
   zoneId: null,
   posX: null,
   posY: null,
@@ -57,7 +55,6 @@ export function LocationsPage() {
     size: table.pageSize,
     sort: table.sortParam,
   });
-  const { data: departments } = departmentsResource.useOptions();
   const { data: zones } = zonesResource.useOptions();
   const crud = useCrudController<LocationResponse, LocationRequest>(locationsResource, {
     entity: 'Location',
@@ -78,7 +75,6 @@ export function LocationsPage() {
               code: e.code,
               displayCode: e.displayCode ?? '',
               type: e.type,
-              departmentId: e.departmentId,
               zoneId: e.zoneId,
               posX: e.posX,
               posY: e.posY,
@@ -96,12 +92,6 @@ export function LocationsPage() {
       { accessorKey: 'code', header: 'Code' },
       { accessorKey: 'type', header: 'Type' },
       { accessorKey: 'zoneCode', header: 'Zone', enableSorting: false, cell: (c) => c.getValue() || '-' },
-      {
-        accessorKey: 'departmentCode',
-        header: 'Department',
-        enableSorting: false,
-        cell: (c) => c.getValue() || '-',
-      },
       {
         id: 'precipitation',
         header: 'Precip.',
@@ -123,7 +113,6 @@ export function LocationsPage() {
       code: v.code,
       displayCode: v.displayCode || null,
       type: v.type,
-      departmentId: v.departmentId ?? null,
       zoneId: v.zoneId ?? null,
       posX: v.posX ?? null,
       posY: v.posY ?? null,
@@ -170,14 +159,6 @@ export function LocationsPage() {
           control={control}
           label="Type"
           options={LOCATION_TYPES.map((t) => ({ value: t, label: t }))}
-        />
-        <RHFSelectField
-          name="departmentId"
-          control={control}
-          label="Department"
-          numeric
-          allowEmpty
-          options={(departments ?? []).map((d) => ({ value: d.id, label: d.code }))}
         />
         <RHFSelectField
           name="zoneId"

@@ -24,7 +24,6 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route index element={<Navigate to="/historical-trends" replace />} />
           <Route path="historical-trends" element={<HistoricalTrendsPage />} />
-          <Route path="departments" element={<DepartmentsPage />} />
           <Route path="zones" element={<ZonesPage />} />
           <Route path="locations" element={<LocationsPage />} />
           <Route path="sensors" element={<SensorsPage />} />
@@ -34,6 +33,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allow={['ADMIN']} />}>
+            <Route path="departments" element={<DepartmentsPage />} />
             <Route path="users" element={<UsersPage />} />
           </Route>
 

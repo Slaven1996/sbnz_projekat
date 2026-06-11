@@ -45,6 +45,7 @@ public class DepartmentService {
         }
         Department d = new Department();
         d.setCode(request.getCode());
+        d.setName(request.getName());
         d.setDescription(request.getDescription());
         return new DepartmentResponse(repository.save(d));
     }
@@ -55,6 +56,7 @@ public class DepartmentService {
             throw new DuplicateResourceException("Department code already exists: " + request.getCode());
         }
         d.setCode(request.getCode());
+        d.setName(request.getName());
         d.setDescription(request.getDescription());
         return new DepartmentResponse(repository.save(d));
     }

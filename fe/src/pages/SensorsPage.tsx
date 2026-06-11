@@ -22,10 +22,6 @@ const schema = z.object({
   displayCode: z.string().max(100).optional().or(z.literal('')),
   sensorType: z.enum(['WATER_LEVEL', 'FLOW_RATE', 'PUMP_STATUS']),
   unitId: z.number().nullable().optional(),
-  engLow: z.number().nullable().optional(),
-  engHigh: z.number().nullable().optional(),
-  rawLow: z.number().nullable().optional(),
-  rawHigh: z.number().nullable().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -35,10 +31,6 @@ const emptyValues: Partial<FormValues> = {
   displayCode: '',
   sensorType: 'WATER_LEVEL',
   unitId: null,
-  engLow: null,
-  engHigh: null,
-  rawLow: null,
-  rawHigh: null,
 };
 
 export function SensorsPage() {
@@ -71,10 +63,6 @@ export function SensorsPage() {
               displayCode: e.displayCode ?? '',
               sensorType: e.sensorType,
               unitId: e.unitId,
-              engLow: e.engLow,
-              engHigh: e.engHigh,
-              rawLow: e.rawLow,
-              rawHigh: e.rawHigh,
             }
           : (emptyValues as FormValues),
       );
@@ -103,10 +91,6 @@ export function SensorsPage() {
       displayCode: v.displayCode || null,
       sensorType: v.sensorType,
       unitId: v.unitId ?? null,
-      engLow: v.engLow ?? null,
-      engHigh: v.engHigh ?? null,
-      rawLow: v.rawLow ?? null,
-      rawHigh: v.rawHigh ?? null,
     });
 
   return (
@@ -164,10 +148,6 @@ export function SensorsPage() {
           allowEmpty
           options={(units ?? []).map((u) => ({ value: u.id, label: `${u.code} (${u.unit})` }))}
         />
-        <RHFTextField name="engLow" control={control} label="Eng Low" type="number" />
-        <RHFTextField name="engHigh" control={control} label="Eng High" type="number" />
-        <RHFTextField name="rawLow" control={control} label="Raw Low" type="number" />
-        <RHFTextField name="rawHigh" control={control} label="Raw High" type="number" />
       </FormDialog>
 
       <ConfirmDialog

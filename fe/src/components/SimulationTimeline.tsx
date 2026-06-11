@@ -16,7 +16,6 @@ import type { SimulationLocationState, SimulationTimelineEvent } from '@/api/typ
 
 type ChipColor = ChipProps['color'];
 
-/** Solid colour used for the timeline dot / system-alert banner. */
 function alertHex(level: string | null | undefined): string {
   switch (level) {
     case 'GREEN':
@@ -32,7 +31,6 @@ function alertHex(level: string | null | undefined): string {
   }
 }
 
-/** Map a domain severity word to a MUI chip colour. */
 function severityColor(value: string | null | undefined): ChipColor {
   switch (value) {
     case 'NORMAL':
@@ -223,7 +221,6 @@ export function SimulationTimeline({ events }: { events: SimulationTimelineEvent
       sx={{
         p: 0,
         m: 0,
-        // remove the empty opposite-content column so cards use full width
         [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 },
       }}
     >

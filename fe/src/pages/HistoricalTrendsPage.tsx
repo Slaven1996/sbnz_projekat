@@ -44,7 +44,6 @@ export function HistoricalTrendsPage() {
   const endDate = watch('endDate');
 
   const bothSelected = Boolean(startDate && endDate);
-  // startDate must be strictly before endDate
   const rangeInvalid = bothSelected && !startDate!.isBefore(endDate!);
 
   const onSubmit = (v: FormValues) => {

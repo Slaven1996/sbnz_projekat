@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -264,11 +263,11 @@ public class HistoricalSimulationService {
             String code = e.getKey();
             LocationStateDTO c = e.getValue();
             LocationStateDTO p = prev.get(code);
-            changes.addAll(transition(code, "water level", p == null ? null : p.getWaterLevel(), c.getWaterLevel()));
-            changes.addAll(transition(code, "flow rate", p == null ? null : p.getFlowLevel(), c.getFlowLevel()));
-            changes.addAll(transition(code, "pump capacity", p == null ? null : p.getCapacityLevel(), c.getCapacityLevel()));
-            changes.addAll(transition(code, "flood risk", p == null ? null : p.getRiskLevel(), c.getRiskLevel()));
-            changes.addAll(transition(code, "recommendation", p == null ? null : p.getRecommendation(), c.getRecommendation()));
+            transition(changes, code, "water level", p == null ? null : p.getWaterLevel(), c.getWaterLevel());
+            transition(changes, code, "flow rate", p == null ? null : p.getFlowLevel(), c.getFlowLevel());
+            transition(changes, code, "pump capacity", p == null ? null : p.getCapacityLevel(), c.getCapacityLevel());
+            transition(changes, code, "flood risk", p == null ? null : p.getRiskLevel(), c.getRiskLevel());
+            transition(changes, code, "recommendation", p == null ? null : p.getRecommendation(), c.getRecommendation());
         }
         if (!Objects.equals(prevAlert, curAlert) && curAlert != null) {
             changes.add(String.format("SYSTEM ALERT: %s → %s",
@@ -277,20 +276,17 @@ public class HistoricalSimulationService {
         return changes;
     }
 
-    private List<String> transition(String code, String label, String from, String to) {
+    private void transition(List<String> changes, String code, String label, String from, String to) {
         if (Objects.equals(from, to)) {
-            return Collections.emptyList();
+            return;
         }
         if (from == null) {
-            return Collections.singletonList(
-                    String.format("%s: %s → %s", code, label, to));
+            changes.add(String.format("%s: %s → %s", code, label, to));
+        } else if (to == null) {
+            changes.add(String.format("%s: %s %s → none", code, label, from));
+        } else {
+            changes.add(String.format("%s: %s %s → %s", code, label, from, to));
         }
-        if (to == null) {
-            return Collections.singletonList(
-                    String.format("%s: %s %s → none", code, label, from));
-        }
-        return Collections.singletonList(
-                String.format("%s: %s %s → %s", code, label, from, to));
     }
 
     private <T> Map<String, T> indexByLocation(KieSession session, Class<T> type,

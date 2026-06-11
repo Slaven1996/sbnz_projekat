@@ -23,11 +23,6 @@ public class SensorRequest {
 
     private Long unitId;
 
-    private Double engLow;
-    private Double engHigh;
-    private Double rawLow;
-    private Double rawHigh;
-
     public Long getLocationId() { return locationId; }
     public void setLocationId(Long locationId) { this.locationId = locationId; }
 
@@ -42,16 +37,4 @@ public class SensorRequest {
 
     public Long getUnitId() { return unitId; }
     public void setUnitId(Long unitId) { this.unitId = unitId; }
-
-    public Double getEngLow() { return engLow; }
-    public void setEngLow(Double engLow) { this.engLow = engLow; }
-
-    public Double getEngHigh() { return engHigh; }
-    public void setEngHigh(Double engHigh) { this.engHigh = engHigh; }
-
-    public Double getRawLow() { return rawLow; }
-    public void setRawLow(Double rawLow) { this.rawLow = rawLow; }
-
-    public Double getRawHigh() { return rawHigh; }
-    public void setRawHigh(Double rawHigh) { this.rawHigh = rawHigh; }
 }

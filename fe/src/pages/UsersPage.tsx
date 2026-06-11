@@ -187,7 +187,7 @@ export function UsersPage() {
           label="Department"
           numeric
           allowEmpty
-          options={(departments ?? []).map((d) => ({ value: d.id, label: d.code }))}
+          options={(departments ?? []).map((d) => ({ value: d.id, label: d.name || d.code }))}
         />
         <RHFCheckboxField name="active" control={control} label="Active" />
       </FormDialog>

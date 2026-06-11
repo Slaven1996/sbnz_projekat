@@ -44,18 +44,6 @@ public class Sensor implements Serializable {
     @JoinColumn(name = "unit_id")
     private TagUnit unit;
 
-    @Column(name = "eng_low")
-    private Double engLow;
-
-    @Column(name = "eng_high")
-    private Double engHigh;
-
-    @Column(name = "raw_low")
-    private Double rawLow;
-
-    @Column(name = "raw_high")
-    private Double rawHigh;
-
     public Sensor() {
     }
 
@@ -76,18 +64,6 @@ public class Sensor implements Serializable {
 
     public TagUnit getUnit() { return unit; }
     public void setUnit(TagUnit unit) { this.unit = unit; }
-
-    public Double getEngLow() { return engLow; }
-    public void setEngLow(Double engLow) { this.engLow = engLow; }
-
-    public Double getEngHigh() { return engHigh; }
-    public void setEngHigh(Double engHigh) { this.engHigh = engHigh; }
-
-    public Double getRawLow() { return rawLow; }
-    public void setRawLow(Double rawLow) { this.rawLow = rawLow; }
-
-    public Double getRawHigh() { return rawHigh; }
-    public void setRawHigh(Double rawHigh) { this.rawHigh = rawHigh; }
 
     @Override
     public String toString() {

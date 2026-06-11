@@ -13,6 +13,7 @@ public class UserResponse {
     private boolean active;
     private Long departmentId;
     private String departmentCode;
+    private String departmentName;
 
     public UserResponse() {
     }
@@ -27,6 +28,7 @@ public class UserResponse {
         if (u.getDepartment() != null) {
             this.departmentId = u.getDepartment().getId();
             this.departmentCode = u.getDepartment().getCode();
+            this.departmentName = u.getDepartment().getName();
         }
     }
 
@@ -53,4 +55,7 @@ public class UserResponse {
 
     public String getDepartmentCode() { return departmentCode; }
     public void setDepartmentCode(String departmentCode) { this.departmentCode = departmentCode; }
+
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
 }

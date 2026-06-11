@@ -38,10 +38,6 @@ public class Location implements Serializable {
     private LocationType type;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "department_id")
-    private Department department;
-
-    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "zone_id")
     private Zone zone;
 
@@ -84,9 +80,6 @@ public class Location implements Serializable {
 
     public LocationType getType() { return type; }
     public void setType(LocationType type) { this.type = type; }
-
-    public Department getDepartment() { return department; }
-    public void setDepartment(Department department) { this.department = department; }
 
     public Zone getZone() { return zone; }
     public void setZone(Zone zone) { this.zone = zone; }

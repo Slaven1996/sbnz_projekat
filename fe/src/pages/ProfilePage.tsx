@@ -91,7 +91,7 @@ export function ProfilePage() {
                   <InfoRow
                     icon={<ApartmentIcon />}
                     label="Department"
-                    value={me?.departmentCode || '-'}
+                    value={me?.departmentName || me?.departmentCode || '-'}
                   />
                   <InfoRow
                     icon={<ToggleOnIcon />}

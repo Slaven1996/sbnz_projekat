@@ -12,8 +12,6 @@ public class LocationResponse {
     private boolean active;
     private Double posX;
     private Double posY;
-    private Long departmentId;
-    private String departmentCode;
     private Long zoneId;
     private String zoneCode;
     private WeatherConditionDto weatherCondition;
@@ -29,10 +27,6 @@ public class LocationResponse {
         this.active = l.isActive();
         this.posX = l.getPosX();
         this.posY = l.getPosY();
-        if (l.getDepartment() != null) {
-            this.departmentId = l.getDepartment().getId();
-            this.departmentCode = l.getDepartment().getCode();
-        }
         if (l.getZone() != null) {
             this.zoneId = l.getZone().getId();
             this.zoneCode = l.getZone().getCode();
@@ -62,12 +56,6 @@ public class LocationResponse {
 
     public Double getPosY() { return posY; }
     public void setPosY(Double posY) { this.posY = posY; }
-
-    public Long getDepartmentId() { return departmentId; }
-    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
-
-    public String getDepartmentCode() { return departmentCode; }
-    public void setDepartmentCode(String departmentCode) { this.departmentCode = departmentCode; }
 
     public Long getZoneId() { return zoneId; }
     public void setZoneId(Long zoneId) { this.zoneId = zoneId; }

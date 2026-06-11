@@ -1,11 +1,21 @@
 
-INSERT IGNORE INTO users (id, name, last_name, email, password, role, active) VALUES
+
+INSERT IGNORE INTO departments (id, code, name, description) VALUES
+    (1, 'DISP',  'Dispatch Center and Monitoring',
+        'Responsible for continuous SCADA system monitoring, analysis of sensor data and issuing intervention orders from the office.'),
+    (2, 'FIELD', 'Field Maintenance and Emergency Response Service',
+        'Responsible for field work, calibration and repair of sensor equipment, and carrying out physical flood protection measures.'),
+    (3, 'IT',    'IT and Expert System Configuration Department',
+        'Responsible for managing infrastructure, the database and defining dynamic rule thresholds.');
+
+INSERT INTO users (id, name, last_name, email, password, role, active, department_id) VALUES
     (1, 'Nikola', 'Nikolic', 'admin@hydro.local',
-        '$2a$10$s.9kj15rCaw9Lr9cPcSyU.hS0blod8gHHM0ZoO7Bgd61coW17p.tW', 'ADMIN', true),
+        '$2a$10$s.9kj15rCaw9Lr9cPcSyU.hS0blod8gHHM0ZoO7Bgd61coW17p.tW', 'ADMIN', true, NULL),
     (2, 'Petar', 'Petrovic', 'petar@hydro.local',
-        '$2a$12$7w2SDeragadWiZRR5j7zBu4t18U.5g5YK/QLSx0FJJ6ycBtvz.UIy', 'OPERATOR', true),
+        '$2a$12$7w2SDeragadWiZRR5j7zBu4t18U.5g5YK/QLSx0FJJ6ycBtvz.UIy', 'OPERATOR', true, 1),
     (3, 'Marko', 'Markovic', 'marko@hydro.local',
-        '$2a$12$7w2SDeragadWiZRR5j7zBu4t18U.5g5YK/QLSx0FJJ6ycBtvz.UIy', 'OPERATOR', true);
+        '$2a$12$7w2SDeragadWiZRR5j7zBu4t18U.5g5YK/QLSx0FJJ6ycBtvz.UIy', 'OPERATOR', true, 2)
+    ON DUPLICATE KEY UPDATE department_id = VALUES(department_id);
 
 INSERT IGNORE INTO tag_units (id, code, unit, description) VALUES
     (1, 'CM',    'cm',    'Water level (centimeters)'),
