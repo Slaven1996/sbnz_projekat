@@ -8,6 +8,7 @@ INSERT IGNORE INTO departments (id, code, name, description) VALUES
     (3, 'IT',    'IT and Expert System Configuration Department',
         'Responsible for managing infrastructure, the database and defining dynamic rule thresholds.');
 
+-- Sifra za admina je "admin123", a za operatere "user123"
 INSERT INTO users (id, name, last_name, email, password, role, active, department_id) VALUES
     (1, 'Nikola', 'Nikolic', 'admin@hydro.local',
         '$2a$10$s.9kj15rCaw9Lr9cPcSyU.hS0blod8gHHM0ZoO7Bgd61coW17p.tW', 'ADMIN', true, NULL),

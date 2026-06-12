@@ -160,7 +160,7 @@ export function HistoricalTrendsPage() {
               <SummaryStat label="Steps" value={String(data.stepCount)} />
               <SummaryStat label="Readings replayed" value={String(data.totalReadings)} />
               <SummaryStat label="Time step" value={data.stepUnit} />
-              <SummaryStat label="Locations" value={data.locationsInvolved.join(', ') || '—'} />
+              <SummaryStat label="Locations" value={data.locationsInvolved.join(', ') || '-'} />
             </Stack>
           </Paper>
 

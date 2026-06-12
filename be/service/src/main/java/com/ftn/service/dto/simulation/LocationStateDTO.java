@@ -1,26 +1,34 @@
 package com.ftn.service.dto.simulation;
 
+import com.ftn.model.enums.ActionType;
+import com.ftn.model.enums.CapacityLevel;
+import com.ftn.model.enums.FlowLevel;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.Priority;
+import com.ftn.model.enums.RiskLevel;
+import com.ftn.model.enums.StatusLevel;
+
 public class LocationStateDTO {
 
     private String locationCode;
-    private String locationType;
+    private LocationType locationType;
     private String zoneCode;
 
-    private String waterLevel;   // StatusLevel: NORMAL / ELEVATED / HIGH / CRITICAL
+    private StatusLevel waterLevel;
     private Double waterValue;
 
-    private String flowLevel;    // FlowLevel: LOW / NORMAL / HIGH
+    private FlowLevel flowLevel;
     private Double flowValue;
 
-    private String capacityLevel; // CapacityLevel: FULL / REDUCED / MINIMAL / OFFLINE
+    private CapacityLevel capacityLevel;
     private Integer activePumps;
     private Integer totalPumps;
 
-    private String riskLevel;    // RiskLevel: LOW / MODERATE / HIGH / EXTREME
+    private RiskLevel riskLevel;
     private String riskReason;
 
-    private String recommendation;        // ActionType: MONITOR / PREPARE / ACTIVATE / EVACUATE
-    private String recommendationPriority; // Priority
+    private ActionType recommendation;
+    private Priority recommendationPriority;
     private String recommendationDescription;
 
     public LocationStateDTO() {
@@ -29,26 +37,26 @@ public class LocationStateDTO {
     public String getLocationCode() { return locationCode; }
     public void setLocationCode(String locationCode) { this.locationCode = locationCode; }
 
-    public String getLocationType() { return locationType; }
-    public void setLocationType(String locationType) { this.locationType = locationType; }
+    public LocationType getLocationType() { return locationType; }
+    public void setLocationType(LocationType locationType) { this.locationType = locationType; }
 
     public String getZoneCode() { return zoneCode; }
     public void setZoneCode(String zoneCode) { this.zoneCode = zoneCode; }
 
-    public String getWaterLevel() { return waterLevel; }
-    public void setWaterLevel(String waterLevel) { this.waterLevel = waterLevel; }
+    public StatusLevel getWaterLevel() { return waterLevel; }
+    public void setWaterLevel(StatusLevel waterLevel) { this.waterLevel = waterLevel; }
 
     public Double getWaterValue() { return waterValue; }
     public void setWaterValue(Double waterValue) { this.waterValue = waterValue; }
 
-    public String getFlowLevel() { return flowLevel; }
-    public void setFlowLevel(String flowLevel) { this.flowLevel = flowLevel; }
+    public FlowLevel getFlowLevel() { return flowLevel; }
+    public void setFlowLevel(FlowLevel flowLevel) { this.flowLevel = flowLevel; }
 
     public Double getFlowValue() { return flowValue; }
     public void setFlowValue(Double flowValue) { this.flowValue = flowValue; }
 
-    public String getCapacityLevel() { return capacityLevel; }
-    public void setCapacityLevel(String capacityLevel) { this.capacityLevel = capacityLevel; }
+    public CapacityLevel getCapacityLevel() { return capacityLevel; }
+    public void setCapacityLevel(CapacityLevel capacityLevel) { this.capacityLevel = capacityLevel; }
 
     public Integer getActivePumps() { return activePumps; }
     public void setActivePumps(Integer activePumps) { this.activePumps = activePumps; }
@@ -56,17 +64,17 @@ public class LocationStateDTO {
     public Integer getTotalPumps() { return totalPumps; }
     public void setTotalPumps(Integer totalPumps) { this.totalPumps = totalPumps; }
 
-    public String getRiskLevel() { return riskLevel; }
-    public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
+    public RiskLevel getRiskLevel() { return riskLevel; }
+    public void setRiskLevel(RiskLevel riskLevel) { this.riskLevel = riskLevel; }
 
     public String getRiskReason() { return riskReason; }
     public void setRiskReason(String riskReason) { this.riskReason = riskReason; }
 
-    public String getRecommendation() { return recommendation; }
-    public void setRecommendation(String recommendation) { this.recommendation = recommendation; }
+    public ActionType getRecommendation() { return recommendation; }
+    public void setRecommendation(ActionType recommendation) { this.recommendation = recommendation; }
 
-    public String getRecommendationPriority() { return recommendationPriority; }
-    public void setRecommendationPriority(String recommendationPriority) {
+    public Priority getRecommendationPriority() { return recommendationPriority; }
+    public void setRecommendationPriority(Priority recommendationPriority) {
         this.recommendationPriority = recommendationPriority;
     }
 

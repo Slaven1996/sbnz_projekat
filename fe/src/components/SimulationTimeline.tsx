@@ -164,7 +164,7 @@ function EventContent({ event }: { event: SimulationTimelineEvent }) {
           </Typography>
           <Chip
             size="small"
-            label={`ALERT: ${event.systemAlertLevel ?? '—'}`}
+            label={`ALERT: ${event.systemAlertLevel ?? '-'}`}
             sx={{ bgcolor: hex, color: '#fff', fontWeight: 700 }}
           />
         </Stack>

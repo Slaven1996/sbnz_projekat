@@ -71,7 +71,7 @@ public class HistoricalSimulationService {
     }
 
     public SimulationResultDTO simulate(LocalDateTime startDate, LocalDateTime endDate,
-                                        String locationCode, String stepUnit) {
+                                        String stepUnit) {
         if (startDate == null || endDate == null) {
             throw new BadRequestException("startDate and endDate are required");
         }
@@ -81,9 +81,8 @@ public class HistoricalSimulationService {
         SimulationStep stepEnum = "DAY".equalsIgnoreCase(stepUnit) ? SimulationStep.DAY : SimulationStep.HOUR;
         ChronoUnit step = stepEnum == SimulationStep.DAY ? ChronoUnit.DAYS : ChronoUnit.HOURS;
 
-        String location = (locationCode == null || locationCode.trim().isEmpty()) ? null : locationCode;
         List<TrendData> readings = trendDataRepository.searchAll(
-                location, null, startDate, endDate,
+                null, null, startDate, endDate,
                 Sort.by(Sort.Direction.ASC, "logTime"));
         if (readings.isEmpty()) {
             throw new BadRequestException(
@@ -221,34 +220,34 @@ public class HistoricalSimulationService {
             Location loc = e.getValue();
             LocationStateDTO dto = new LocationStateDTO();
             dto.setLocationCode(code);
-            dto.setLocationType(loc.getType() != null ? loc.getType().name() : null);
+            dto.setLocationType(loc.getType());
             dto.setZoneCode(loc.getZone() != null ? loc.getZone().getCode() : null);
 
             WaterLevelStatus w = wls.get(code);
             if (w != null) {
-                dto.setWaterLevel(w.getLevel().name());
+                dto.setWaterLevel(w.getLevel());
                 dto.setWaterValue(w.getValue());
             }
             FlowRateStatus f = frs.get(code);
             if (f != null) {
-                dto.setFlowLevel(f.getLevel().name());
+                dto.setFlowLevel(f.getLevel());
                 dto.setFlowValue(f.getValue());
             }
             StationCapacity c = caps.get(code);
             if (c != null) {
-                dto.setCapacityLevel(c.getLevel().name());
+                dto.setCapacityLevel(c.getLevel());
                 dto.setActivePumps(c.getActivePumps());
                 dto.setTotalPumps(c.getTotalPumps());
             }
             FloodRiskAssessment r = risks.get(code);
             if (r != null) {
-                dto.setRiskLevel(r.getRiskLevel().name());
+                dto.setRiskLevel(r.getRiskLevel());
                 dto.setRiskReason(r.getReason());
             }
             InterventionRecommendation rec = recs.get(code);
             if (rec != null) {
-                dto.setRecommendation(rec.getType().name());
-                dto.setRecommendationPriority(rec.getPriority().name());
+                dto.setRecommendation(rec.getType());
+                dto.setRecommendationPriority(rec.getPriority());
                 dto.setRecommendationDescription(rec.getDescription());
             }
             result.put(code, dto);
@@ -271,12 +270,12 @@ public class HistoricalSimulationService {
         }
         if (!Objects.equals(prevAlert, curAlert) && curAlert != null) {
             changes.add(String.format("SYSTEM ALERT: %s → %s",
-                    prevAlert == null ? "—" : prevAlert, curAlert));
+                    prevAlert == null ? "-" : prevAlert, curAlert));
         }
         return changes;
     }
 
-    private void transition(List<String> changes, String code, String label, String from, String to) {
+    private void transition(List<String> changes, String code, String label, Object from, Object to) {
         if (Objects.equals(from, to)) {
             return;
         }

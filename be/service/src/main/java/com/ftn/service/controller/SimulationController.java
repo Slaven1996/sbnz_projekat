@@ -25,8 +25,7 @@ public class SimulationController {
     public SimulationResultDTO simulate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(required = false) String locationCode,
             @RequestParam(required = false, defaultValue = "HOUR") String step) {
-        return service.simulate(startDate, endDate, locationCode, step);
+        return service.simulate(startDate, endDate, step);
     }
 }

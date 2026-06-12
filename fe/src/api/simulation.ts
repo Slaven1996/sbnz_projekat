@@ -8,7 +8,6 @@ async function runSimulation(params: SimulationParams): Promise<SimulationResult
       startDate: params.startDate,
       endDate: params.endDate,
       step: params.step ?? 'HOUR',
-      ...(params.locationCode ? { locationCode: params.locationCode } : {}),
     },
   });
   return data;

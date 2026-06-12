@@ -218,7 +218,6 @@ export interface SimulationResult {
 export interface SimulationParams {
   startDate: string;
   endDate: string;
-  locationCode?: string;
   step?: StepUnit;
 }
 
