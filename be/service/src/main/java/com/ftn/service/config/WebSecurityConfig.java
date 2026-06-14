@@ -64,6 +64,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .antMatchers(HttpMethod.POST, "/auth/change-password").authenticated()
                     .antMatchers("/auth/**").permitAll()
+                    .antMatchers("/ws/**").permitAll()
+                    .antMatchers(HttpMethod.POST, "/api/monitoring/**").hasAnyAuthority("ADMIN", "OPERATOR")
                     .antMatchers(HttpMethod.GET, "/api/**").hasAnyAuthority("ADMIN", "OPERATOR")
                     .antMatchers(HttpMethod.POST, "/api/**").hasAuthority("ADMIN")
                     .antMatchers(HttpMethod.PUT, "/api/**").hasAuthority("ADMIN")

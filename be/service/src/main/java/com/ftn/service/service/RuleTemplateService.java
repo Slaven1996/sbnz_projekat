@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.drools.template.ObjectDataCompiler;
 import org.kie.api.KieBase;
+import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.io.ResourceType;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,17 @@ public class RuleTemplateService {
             "rules/group3-recommendations.drl"
     };
 
+    private static final String CEP_DRL = "rules/group4-cep.drl";
+
     public KieBase build(List<ThresholdConfig> thresholds) {
+        return collectRules(thresholds, false).build();
+    }
+
+    public KieBase buildStream(List<ThresholdConfig> thresholds) {
+        return collectRules(thresholds, true).build(EventProcessingOption.STREAM);
+    }
+
+    private KieHelper collectRules(List<ThresholdConfig> thresholds, boolean includeCep) {
         List<Map<String, Object>> belowRows = new ArrayList<>();
         List<Map<String, Object>> rangeRows = new ArrayList<>();
         List<Map<String, Object>> aboveRows = new ArrayList<>();
@@ -79,8 +90,11 @@ public class RuleTemplateService {
         for (String drl : STATIC_DRLS) {
             helper.addContent(readClasspath(drl), ResourceType.DRL);
         }
+        if (includeCep) {
+            helper.addContent(readClasspath(CEP_DRL), ResourceType.DRL);
+        }
 
-        return helper.build();
+        return helper;
     }
 
     private String compile(List<Map<String, Object>> rows, String templatePath) {

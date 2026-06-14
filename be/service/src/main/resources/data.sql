@@ -58,15 +58,26 @@ INSERT IGNORE INTO threshold_configs (id, location_type, parameter_type, normal_
 -- Konvencija za pumpe: 1.0=ACTIVE, 0.0=IDLE, -1.0=FAULTY.
 -- ============================================================================
 
-INSERT IGNORE INTO locations (id, code, display_code, type, zone_id, active) VALUES
-    (1, 'LOC_RIJEKA', 'Dunav @ Novi Sad', 'RIVER',        3, true),
-    (2, 'LOC_PUMPA',  'CS Pančevo',        'PUMP_STATION', 6, true);
+INSERT INTO locations (id, code, display_code, type, zone_id, pos_x, pos_y, active) VALUES
+    (1, 'LOC_RIJEKA',  'Dunav @ Novi Sad',         'RIVER',        3, 45.2517, 19.8369, true),
+    (2, 'LOC_PUMPA',   'CS Pančevo',               'PUMP_STATION', 6, 44.8708, 20.6403, true),
+    (3, 'LOC_SM_SAVA', 'Sava @ Sremska Mitrovica', 'RIVER',        7, 44.9769, 19.6122, true),
+    (4, 'LOC_ZR_BEGEJ','Begej @ Zrenjanin',        'RIVER',        5, 45.3836, 20.3819, true),
+    (5, 'LOC_BZ_DUNAV','Dunav @ Bezdan',           'RIVER',        1, 45.8453, 18.9286, true),
+    (6, 'LOC_SO_KANAL','DTD kanal @ Sombor',       'CANAL',        1, 45.7742, 19.1122, true),
+    (7, 'LOC_KI_KANAL','DTD kanal @ Kikinda',      'CANAL',        4, 45.8294, 20.4653, true)
+    ON DUPLICATE KEY UPDATE pos_x = VALUES(pos_x), pos_y = VALUES(pos_y);
 
 -- Meteo kontekst je konstantan po lokaciji tokom reprodukcije (padavine < 10
 -- kako bi na kraju bila moguca potpuna deeskalacija na LOW/GREEN).
 INSERT IGNORE INTO weather_conditions (id, location_id, precipitation, last_update) VALUES
     (1, 1, 5.0, '2026-05-04 06:00:00'),
-    (2, 2, 5.0, '2026-05-04 06:00:00');
+    (2, 2, 5.0, '2026-05-04 06:00:00'),
+    (3, 3, 6.0, '2026-05-04 06:00:00'),
+    (4, 4, 4.0, '2026-05-04 06:00:00'),
+    (5, 5, 7.0, '2026-05-04 06:00:00'),
+    (6, 6, 3.0, '2026-05-04 06:00:00'),
+    (7, 7, 5.0, '2026-05-04 06:00:00');
 
 INSERT IGNORE INTO sensors (id, location_id, tag_name, display_code, sensor_type, unit_id) VALUES
     (1, 1, 'RIJEKA_WL', 'Water level', 'WATER_LEVEL', 1),
@@ -77,7 +88,17 @@ INSERT IGNORE INTO sensors (id, location_id, tag_name, display_code, sensor_type
     (6, 2, 'PUMPA_P2',  'Pump 2',      'PUMP_STATUS', 3),
     (7, 2, 'PUMPA_P3',  'Pump 3',      'PUMP_STATUS', 3),
     (8, 2, 'PUMPA_P4',  'Pump 4',      'PUMP_STATUS', 3),
-    (9, 2, 'PUMPA_P5',  'Pump 5',      'PUMP_STATUS', 3);
+    (9, 2, 'PUMPA_P5',  'Pump 5',      'PUMP_STATUS', 3),
+    (10, 3, 'SM_WL', 'Water level', 'WATER_LEVEL', 1),
+    (11, 3, 'SM_FR', 'Flow rate',   'FLOW_RATE',   2),
+    (12, 4, 'ZR_WL', 'Water level', 'WATER_LEVEL', 1),
+    (13, 4, 'ZR_FR', 'Flow rate',   'FLOW_RATE',   2),
+    (14, 5, 'BZ_WL', 'Water level', 'WATER_LEVEL', 1),
+    (15, 5, 'BZ_FR', 'Flow rate',   'FLOW_RATE',   2),
+    (16, 6, 'SO_WL', 'Water level', 'WATER_LEVEL', 1),
+    (17, 6, 'SO_FR', 'Flow rate',   'FLOW_RATE',   2),
+    (18, 7, 'KI_WL', 'Water level', 'WATER_LEVEL', 1),
+    (19, 7, 'KI_FR', 'Flow rate',   'FLOW_RATE',   2);
 
 -- ----------------------------------------------------------------------------
 -- LOC_RIJEKA - eskalacija pa deeskalacija na rijeci (8 koraka po satu).

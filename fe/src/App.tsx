@@ -3,6 +3,7 @@ import { MainLayout } from '@/layout/MainLayout';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { RoleRoute } from '@/routes/RoleRoute';
 import { LoginPage } from '@/pages/LoginPage';
+import { LiveDashboardPage } from '@/pages/LiveDashboardPage';
 import { HistoricalTrendsPage } from '@/pages/HistoricalTrendsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { DepartmentsPage } from '@/pages/DepartmentsPage';
@@ -22,7 +23,8 @@ export default function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route index element={<Navigate to="/historical-trends" replace />} />
+          <Route index element={<Navigate to="/live-dashboard" replace />} />
+          <Route path="live-dashboard" element={<LiveDashboardPage />} />
           <Route path="historical-trends" element={<HistoricalTrendsPage />} />
           <Route path="zones" element={<ZonesPage />} />
           <Route path="locations" element={<LocationsPage />} />

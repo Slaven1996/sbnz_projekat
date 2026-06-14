@@ -221,6 +221,62 @@ export interface SimulationParams {
   step?: StepUnit;
 }
 
+export type MonitoringSeverity = 'NORMAL' | 'WARNING' | 'DANGER' | 'CRITICAL';
+
+export interface MonitoringLocationState {
+  locationCode: string;
+  displayCode: string | null;
+  locationType: string | null;
+  zoneCode: string | null;
+  posX: number | null;
+  posY: number | null;
+  waterLevel: string | null;
+  waterValue: number | null;
+  flowLevel: string | null;
+  flowValue: number | null;
+  capacityLevel: string | null;
+  activePumps: number | null;
+  totalPumps: number | null;
+  riskLevel: string | null;
+  riskReason: string | null;
+  recommendation: string | null;
+  recommendationPriority: string | null;
+  recommendationDescription: string | null;
+  severity: MonitoringSeverity;
+}
+
+export interface MonitoringEvent {
+  time: string;
+  severity: MonitoringSeverity | string;
+  locationCode: string | null;
+  message: string;
+}
+
+export interface MonitoringTick {
+  tick: number;
+  pseudoTime: string;
+  cepEnabled: boolean;
+  firedRules: number;
+  systemAlertLevel: string | null;
+  systemAlertDescription: string | null;
+  locations: MonitoringLocationState[];
+  events: MonitoringEvent[];
+}
+
+export interface MonitoringStatus {
+  active: boolean;
+  cepEnabled: boolean;
+  tick: number;
+  pseudoTime: string | null;
+  locationCount: number;
+  tickIntervalSeconds: number;
+  pseudoStepMinutes: number;
+}
+
+export interface MonitoringStartRequest {
+  cepEnabled: boolean;
+}
+
 export interface ApiError {
   status?: number;
   error?: string;
