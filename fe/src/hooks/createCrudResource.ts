@@ -22,7 +22,6 @@ export function createCrudResource<TResponse, TRequest>(opts: {
   const key = opts.key;
   const basePath = `/api/${opts.path ?? opts.key}`;
 
-  // ---- raw API calls ----
   const apiClient = {
     list: async (params?: PageParams) => {
       const { data } = await api.get<PagedResponse<TResponse>>(basePath, {

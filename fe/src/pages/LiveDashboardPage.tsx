@@ -20,14 +20,12 @@ import { keyframes } from '@mui/system';
 import CircleIcon from '@mui/icons-material/Circle';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/api/axios';
 import {
   useMonitoringStatus,
   useStartMonitoring,
   useStopMonitoring,
 } from '@/api/monitoring';
-import type { LocationResponse, PagedResponse } from '@/api/types';
+import { locationsResource } from '@/api/resources';
 import { MonitoringMap, SEVERITY_COLOR, type MapPoint } from '@/components/monitoring/MonitoringMap';
 import { useMonitoringSocket } from '@/hooks/useMonitoringSocket';
 import { PageHeader } from '@/components/PageHeader';
@@ -56,17 +54,14 @@ export function LiveDashboardPage() {
   const { connected, latest, feed } = useMonitoringSocket(true);
 
   const [cep, setCep] = useState(false);
+  
   useEffect(() => {
     if (status) setCep(status.cepEnabled);
   }, [status?.cepEnabled]);
 
   const isActive = status?.active ?? false;
 
-  const { data: locData } = useQuery({
-    queryKey: ['locations', 'map'],
-    queryFn: async () =>
-      (await api.get<PagedResponse<LocationResponse>>('/api/locations', { params: { size: 100 } })).data,
-  });
+  const { data: locations } = locationsResource.useOptions();
 
   const stateByCode = useMemo(() => {
     const map = new Map<string, NonNullable<typeof latest>['locations'][number]>();
@@ -75,7 +70,7 @@ export function LiveDashboardPage() {
   }, [latest]);
 
   const points: MapPoint[] = useMemo(() => {
-    const base = (locData?.content ?? []).filter((l) => l.posX != null && l.posY != null);
+    const base = (locations ?? []).filter((l) => l.posX != null && l.posY != null);
     return base.map((l) => ({
       code: l.code,
       name: l.displayCode || l.code,
@@ -83,7 +78,7 @@ export function LiveDashboardPage() {
       lng: l.posY as number,
       state: stateByCode.get(l.code),
     }));
-  }, [locData, stateByCode]);
+  }, [locations, stateByCode]);
 
   const handleToggle = () => {
     if (isActive) {

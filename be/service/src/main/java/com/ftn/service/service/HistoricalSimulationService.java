@@ -1,17 +1,13 @@
 package com.ftn.service.service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.kie.api.KieBase;
@@ -21,18 +17,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ftn.model.FloodRiskAssessment;
-import com.ftn.model.FlowRateStatus;
-import com.ftn.model.InterventionRecommendation;
 import com.ftn.model.Location;
-import com.ftn.model.SensorReading;
 import com.ftn.model.Sensor;
-import com.ftn.model.StationCapacity;
 import com.ftn.model.SystemAlert;
 import com.ftn.model.ThresholdConfig;
 import com.ftn.model.TrendData;
-import com.ftn.model.WaterLevelStatus;
-import com.ftn.model.WeatherCondition;
 import com.ftn.model.enums.SensorType;
 import com.ftn.service.dto.simulation.LocationStateDTO;
 import com.ftn.service.dto.simulation.SimulationResultDTO;
@@ -107,23 +96,17 @@ public class HistoricalSimulationService {
         Map<String, SensorType> sensorTypes = new HashMap<>();
         for (Sensor s : sensorRepository.findAll()) {
             if (s.getLocation() != null) {
-                sensorTypes.put(key(s.getLocation().getCode(), s.getTagName()), s.getSensorType());
+                sensorTypes.put(Helper.sensorKey(s.getLocation().getCode(), s.getTagName()),
+                        s.getSensorType());
             }
         }
 
         KieSession session = kieBase.newKieSession();
         Map<String, FactHandle> readingHandles = new HashMap<>();
         try {
-            for (ThresholdConfig tc : thresholds) {
-                session.insert(tc);
-            }
-            for (Location loc : locations.values()) {
-                session.insert(loc);
-                weatherConditionRepository.findByLocationId(loc.getId()).ifPresent(
-                        wc -> session.insert(new WeatherCondition(loc, wc.getPrecipitation())));
-            }
+            Helper.seedFacts(session, thresholds, locations.values(), weatherConditionRepository);
 
-            Map<LocalDateTime, List<TrendData>> steps = groupByStep(readings, step);
+            Map<LocalDateTime, List<TrendData>> steps = Helper.groupByStep(readings, step);
 
             List<TimelineEventDTO> timeline = new ArrayList<>();
             Map<String, LocationStateDTO> previous = new HashMap<>();
@@ -138,30 +121,29 @@ public class HistoricalSimulationService {
                     if (loc == null) {
                         continue;
                     }
-                    SensorType type = sensorTypes.get(key(td.getLocationCode(), td.getTagName()));
+                    SensorType type = sensorTypes.get(
+                            Helper.sensorKey(td.getLocationCode(), td.getTagName()));
                     if (type == null) {
                         continue;
                     }
-                    applyReading(session, readingHandles, loc, type, td);
+                    Helper.applyReading(session, readingHandles, loc, type,
+                            td.getTagName(), td.getTagValue(), Helper.toDate(td.getLogTime()));
                     event.getAppliedReadings().add(String.format("%s / %s (%s) = %s",
-                            td.getLocationCode(), td.getTagName(), type, trim(td.getTagValue())));
+                            td.getLocationCode(), td.getTagName(), type, Helper.trim(td.getTagValue())));
                 }
 
                 int fired = session.fireAllRules();
                 event.setFiredRules(fired);
 
-                Map<String, LocationStateDTO> current = snapshot(session, locations);
+                Map<String, LocationStateDTO> current = Helper.snapshot(session, locations);
                 event.setLocationStates(new ArrayList<>(current.values()));
 
-                SystemAlert alert = null;
-                for (Object o : session.getObjects(obj -> obj instanceof SystemAlert)) {
-                    alert = (SystemAlert) o;
-                }
+                SystemAlert alert = Helper.latestSystemAlert(session);
                 String alertLevel = alert != null ? alert.getLevel().name() : null;
                 event.setSystemAlertLevel(alertLevel);
                 event.setSystemAlertDescription(alert != null ? alert.getDescription() : null);
 
-                event.setChanges(diff(previous, current, previousAlert, alertLevel));
+                event.setChanges(Helper.diff(previous, current, previousAlert, alertLevel));
 
                 timeline.add(event);
                 previous = current;
@@ -182,137 +164,4 @@ public class HistoricalSimulationService {
         }
     }
 
-    private void applyReading(KieSession session, Map<String, FactHandle> handles,
-                              Location loc, SensorType type, TrendData td) {
-        String handleKey = key(td.getLocationCode(), td.getTagName());
-        Date ts = toDate(td.getLogTime());
-        FactHandle handle = handles.get(handleKey);
-        if (handle == null) {
-            SensorReading reading = new SensorReading(loc, type, td.getTagName(), td.getTagValue(), ts);
-            handles.put(handleKey, session.insert(reading));
-        } else {
-            SensorReading reading = (SensorReading) session.getObject(handle);
-            reading.setValue(td.getTagValue());
-            reading.setTimestamp(ts);
-            session.update(handle, reading);
-        }
-    }
-
-    private Map<LocalDateTime, List<TrendData>> groupByStep(List<TrendData> readings, ChronoUnit step) {
-        Map<LocalDateTime, List<TrendData>> grouped = new LinkedHashMap<>();
-        for (TrendData td : readings) {
-            LocalDateTime bucket = td.getLogTime().truncatedTo(step);
-            grouped.computeIfAbsent(bucket, k -> new ArrayList<>()).add(td);
-        }
-        return grouped;
-    }
-
-    private Map<String, LocationStateDTO> snapshot(KieSession session, Map<String, Location> locations) {
-        Map<String, WaterLevelStatus> wls = indexByLocation(session, WaterLevelStatus.class, WaterLevelStatus::getLocation);
-        Map<String, FlowRateStatus> frs = indexByLocation(session, FlowRateStatus.class, FlowRateStatus::getLocation);
-        Map<String, StationCapacity> caps = indexByLocation(session, StationCapacity.class, StationCapacity::getLocation);
-        Map<String, FloodRiskAssessment> risks = indexByLocation(session, FloodRiskAssessment.class, FloodRiskAssessment::getLocation);
-        Map<String, InterventionRecommendation> recs = indexByLocation(session, InterventionRecommendation.class, InterventionRecommendation::getLocation);
-
-        Map<String, LocationStateDTO> result = new LinkedHashMap<>();
-        for (Map.Entry<String, Location> e : locations.entrySet()) {
-            String code = e.getKey();
-            Location loc = e.getValue();
-            LocationStateDTO dto = new LocationStateDTO();
-            dto.setLocationCode(code);
-            dto.setLocationType(loc.getType());
-            dto.setZoneCode(loc.getZone() != null ? loc.getZone().getCode() : null);
-
-            WaterLevelStatus w = wls.get(code);
-            if (w != null) {
-                dto.setWaterLevel(w.getLevel());
-                dto.setWaterValue(w.getValue());
-            }
-            FlowRateStatus f = frs.get(code);
-            if (f != null) {
-                dto.setFlowLevel(f.getLevel());
-                dto.setFlowValue(f.getValue());
-            }
-            StationCapacity c = caps.get(code);
-            if (c != null) {
-                dto.setCapacityLevel(c.getLevel());
-                dto.setActivePumps(c.getActivePumps());
-                dto.setTotalPumps(c.getTotalPumps());
-            }
-            FloodRiskAssessment r = risks.get(code);
-            if (r != null) {
-                dto.setRiskLevel(r.getRiskLevel());
-                dto.setRiskReason(r.getReason());
-            }
-            InterventionRecommendation rec = recs.get(code);
-            if (rec != null) {
-                dto.setRecommendation(rec.getType());
-                dto.setRecommendationPriority(rec.getPriority());
-                dto.setRecommendationDescription(rec.getDescription());
-            }
-            result.put(code, dto);
-        }
-        return result;
-    }
-
-    private List<String> diff(Map<String, LocationStateDTO> prev, Map<String, LocationStateDTO> cur,
-                              String prevAlert, String curAlert) {
-        List<String> changes = new ArrayList<>();
-        for (Map.Entry<String, LocationStateDTO> e : cur.entrySet()) {
-            String code = e.getKey();
-            LocationStateDTO c = e.getValue();
-            LocationStateDTO p = prev.get(code);
-            transition(changes, code, "water level", p == null ? null : p.getWaterLevel(), c.getWaterLevel());
-            transition(changes, code, "flow rate", p == null ? null : p.getFlowLevel(), c.getFlowLevel());
-            transition(changes, code, "pump capacity", p == null ? null : p.getCapacityLevel(), c.getCapacityLevel());
-            transition(changes, code, "flood risk", p == null ? null : p.getRiskLevel(), c.getRiskLevel());
-            transition(changes, code, "recommendation", p == null ? null : p.getRecommendation(), c.getRecommendation());
-        }
-        if (!Objects.equals(prevAlert, curAlert) && curAlert != null) {
-            changes.add(String.format("SYSTEM ALERT: %s → %s",
-                    prevAlert == null ? "-" : prevAlert, curAlert));
-        }
-        return changes;
-    }
-
-    private void transition(List<String> changes, String code, String label, Object from, Object to) {
-        if (Objects.equals(from, to)) {
-            return;
-        }
-        if (from == null) {
-            changes.add(String.format("%s: %s → %s", code, label, to));
-        } else if (to == null) {
-            changes.add(String.format("%s: %s %s → none", code, label, from));
-        } else {
-            changes.add(String.format("%s: %s %s → %s", code, label, from, to));
-        }
-    }
-
-    private <T> Map<String, T> indexByLocation(KieSession session, Class<T> type,
-                                               Function<T, Location> locator) {
-        Map<String, T> map = new HashMap<>();
-        for (Object o : session.getObjects(obj -> type.isInstance(obj))) {
-            T fact = type.cast(o);
-            Location loc = locator.apply(fact);
-            if (loc != null && loc.getCode() != null) {
-                map.put(loc.getCode(), fact);
-            }
-        }
-        return map;
-    }
-
-    private Date toDate(LocalDateTime ldt) {
-        return Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
-    }
-
-    private String key(String locationCode, String tagName) {
-        return locationCode + "|" + tagName;
-    }
-
-    private String trim(double v) {
-        if (v == Math.floor(v) && !Double.isInfinite(v)) {
-            return String.valueOf((long) v);
-        }
-        return String.valueOf(v);
-    }
 }

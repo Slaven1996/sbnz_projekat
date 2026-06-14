@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
@@ -34,13 +33,11 @@ import com.ftn.model.FlowRateStatus;
 import com.ftn.model.InterventionRecommendation;
 import com.ftn.model.Location;
 import com.ftn.model.Sensor;
-import com.ftn.model.SensorReading;
 import com.ftn.model.StationCapacity;
 import com.ftn.model.SystemAlert;
 import com.ftn.model.ThresholdConfig;
 import com.ftn.model.TrendData;
 import com.ftn.model.WaterLevelStatus;
-import com.ftn.model.WeatherCondition;
 import com.ftn.model.enums.SensorType;
 import com.ftn.model.events.ConnectionLostAlert;
 import com.ftn.model.events.HeartbeatEvent;
@@ -64,6 +61,8 @@ public class RealTimeSimulationService {
 
     private static final int PSEUDO_STEP_MINUTES = 3;
 
+    private static final int SCENARIO_TICKS = 4;
+
     private static final AgendaFilter NO_CEP =
             match -> !match.getRule().getName().startsWith("CEP");
 
@@ -84,7 +83,7 @@ public class RealTimeSimulationService {
             });
 
     private volatile boolean active = false;
-    private boolean cepEnabled = true;
+    private boolean cepEnabled = false;
     private int tickCount = 0;
     private LocalDateTime pseudoTime;
 
@@ -101,6 +100,9 @@ public class RealTimeSimulationService {
     private final Map<String, String> previousRisk = new HashMap<>();
     private String previousSystemAlert;
     private Set<String> previousCepAlerts = new HashSet<>();
+
+    private String scenarioRiseKey;
+    private String scenarioFaultKey;
 
     public RealTimeSimulationService(LocationRepository locationRepository,
                                      SensorRepository sensorRepository,
@@ -193,7 +195,18 @@ public class RealTimeSimulationService {
 
         values.clear();
         for (Sensor s : sensors) {
-            values.put(sensorKey(s), baseline(s.getSensorType()));
+            values.put(Helper.sensorKey(s), Helper.baseline(s.getSensorType()));
+        }
+
+        scenarioRiseKey = null;
+        scenarioFaultKey = null;
+        for (Sensor s : sensors) {
+            if (scenarioRiseKey == null && s.getSensorType() == SensorType.WATER_LEVEL) {
+                scenarioRiseKey = Helper.sensorKey(s);
+            }
+            if (scenarioFaultKey == null && s.getSensorType() == SensorType.PUMP_STATUS) {
+                scenarioFaultKey = Helper.sensorKey(s);
+            }
         }
     }
 
@@ -205,14 +218,7 @@ public class RealTimeSimulationService {
         clock = session.getSessionClock();
 
         readingHandles.clear();
-        for (ThresholdConfig tc : thresholds) {
-            session.insert(tc);
-        }
-        for (Location loc : locations) {
-            session.insert(loc);
-            weatherConditionRepository.findByLocationId(loc.getId()).ifPresent(
-                    wc -> session.insert(new WeatherCondition(loc, wc.getPrecipitation())));
-        }
+        Helper.seedFacts(session, thresholds, locations, weatherConditionRepository);
     }
 
     private void safeTick() {
@@ -244,8 +250,9 @@ public class RealTimeSimulationService {
         for (Sensor s : sensors) {
             Location loc = s.getLocation();
             double value = nextValue(s);
-            values.put(sensorKey(s), value);
-            applyReading(loc, s.getSensorType(), s.getTagName(), value, ts);
+            values.put(Helper.sensorKey(s), value);
+            Helper.applyReading(session, readingHandles, loc, s.getSensorType(),
+                    s.getTagName(), value, ts);
             if (cepEnabled) {
                 session.insert(new SensorReadingEvent(
                         loc.getCode(), s.getSensorType(), s.getTagName(), value, ts));
@@ -270,32 +277,19 @@ public class RealTimeSimulationService {
         messagingTemplate.convertAndSend("/topic/monitoring", payload);
     }
 
-    private void applyReading(Location loc, SensorType type, String tagName, double value, Date ts) {
-        String handleKey = sensorKey(loc.getCode(), tagName);
-        FactHandle handle = readingHandles.get(handleKey);
-        if (handle == null) {
-            SensorReading reading = new SensorReading(loc, type, tagName, value, ts);
-            readingHandles.put(handleKey, session.insert(reading));
-        } else {
-            SensorReading reading = (SensorReading) session.getObject(handle);
-            reading.setValue(value);
-            reading.setTimestamp(ts);
-            session.update(handle, reading);
-        }
-    }
-
     private MonitoringTickDTO buildPayload(Map<String, Location> byCode, int fired) {
-        Map<String, WaterLevelStatus> wls = index(WaterLevelStatus.class, WaterLevelStatus::getLocation);
-        Map<String, FlowRateStatus> frs = index(FlowRateStatus.class, FlowRateStatus::getLocation);
-        Map<String, StationCapacity> caps = index(StationCapacity.class, StationCapacity::getLocation);
-        Map<String, FloodRiskAssessment> risks = index(FloodRiskAssessment.class, FloodRiskAssessment::getLocation);
+        Map<String, WaterLevelStatus> wls =
+                Helper.index(session, WaterLevelStatus.class, WaterLevelStatus::getLocation);
+        Map<String, FlowRateStatus> frs =
+                Helper.index(session, FlowRateStatus.class, FlowRateStatus::getLocation);
+        Map<String, StationCapacity> caps =
+                Helper.index(session, StationCapacity.class, StationCapacity::getLocation);
+        Map<String, FloodRiskAssessment> risks =
+                Helper.index(session, FloodRiskAssessment.class, FloodRiskAssessment::getLocation);
         Map<String, InterventionRecommendation> recs =
-                index(InterventionRecommendation.class, InterventionRecommendation::getLocation);
+                Helper.index(session, InterventionRecommendation.class, InterventionRecommendation::getLocation);
 
-        SystemAlert alert = null;
-        for (Object o : session.getObjects(obj -> obj instanceof SystemAlert)) {
-            alert = (SystemAlert) o;
-        }
+        SystemAlert alert = Helper.latestSystemAlert(session);
         String alertLevel = alert != null ? alert.getLevel().name() : null;
 
         MonitoringTickDTO payload = new MonitoringTickDTO();
@@ -348,7 +342,7 @@ public class RealTimeSimulationService {
                         rec.getPriority() != null ? rec.getPriority().name() : null);
                 dto.setRecommendationDescription(rec.getDescription());
             }
-            dto.setSeverity(severity(dto));
+            dto.setSeverity(Helper.severity(dto));
             payload.getLocations().add(dto);
 
             String newRisk = dto.getRiskLevel();
@@ -362,7 +356,7 @@ public class RealTimeSimulationService {
         }
 
         if (!Objects.equals(previousSystemAlert, alertLevel) && alertLevel != null) {
-            events.add(new MonitoringEventDTO(time, mapAlertSeverity(alertLevel), null,
+            events.add(new MonitoringEventDTO(time, Helper.mapAlertSeverity(alertLevel), null,
                     "SYSTEM ALERT: " + (previousSystemAlert == null ? "—" : previousSystemAlert)
                             + " → " + alertLevel));
         }
@@ -411,26 +405,24 @@ public class RealTimeSimulationService {
         return events;
     }
 
-    private <T> Map<String, T> index(Class<T> type, Function<T, Location> locator) {
-        Map<String, T> map = new HashMap<>();
-        for (Object o : session.getObjects(obj -> type.isInstance(obj))) {
-            T fact = type.cast(o);
-            Location loc = locator.apply(fact);
-            if (loc != null && loc.getCode() != null) {
-                map.put(loc.getCode(), fact);
+    private double nextValue(Sensor s) {
+        String key = Helper.sensorKey(s);
+
+        if (cepEnabled && tickCount <= SCENARIO_TICKS) {
+            if (key.equals(scenarioRiseKey)) {
+                return 200.0 + (tickCount - 1) * 120.0;
+            }
+            if (key.equals(scenarioFaultKey) && tickCount == 2) {
+                return -1.0;
             }
         }
-        return map;
-    }
 
-    private double nextValue(Sensor s) {
-        String key = sensorKey(s);
-        double cur = values.getOrDefault(key, baseline(s.getSensorType()));
+        double cur = values.getOrDefault(key, Helper.baseline(s.getSensorType()));
         switch (s.getSensorType()) {
             case WATER_LEVEL:
-                return meanRevert(cur, 180.0, 70.0, 30.0, 650.0);
+                return Helper.meanRevert(random, cur, 180.0, 70.0, 30.0, 650.0);
             case FLOW_RATE:
-                return meanRevert(cur, 1800.0, 600.0, 100.0, 4500.0);
+                return Helper.meanRevert(random, cur, 1800.0, 600.0, 100.0, 4500.0);
             case PUMP_STATUS:
             default:
                 double r = random.nextDouble();
@@ -443,88 +435,4 @@ public class RealTimeSimulationService {
         }
     }
 
-    private double meanRevert(double cur, double baseline, double amplitude, double min, double max) {
-        double drift = (baseline - cur) * 0.15;
-        double noise = (random.nextDouble() - 0.5) * 2.0 * amplitude;
-        double next = cur + drift + noise;
-        next = Math.max(min, Math.min(max, next));
-        return Math.round(next * 10.0) / 10.0;
-    }
-
-    private double baseline(SensorType type) {
-        switch (type) {
-            case WATER_LEVEL:
-                return 180.0;
-            case FLOW_RATE:
-                return 1800.0;
-            case PUMP_STATUS:
-            default:
-                return 1.0;
-        }
-    }
-
-    private String severity(MonitoringLocationDTO d) {
-        int s = 0;
-        s = Math.max(s, riskScore(d.getRiskLevel()));
-        s = Math.max(s, waterScore(d.getWaterLevel()));
-        if ("OFFLINE".equals(d.getCapacityLevel())) {
-            s = Math.max(s, 3);
-        } else if ("MINIMAL".equals(d.getCapacityLevel())) {
-            s = Math.max(s, 2);
-        }
-        return severityLabel(s);
-    }
-
-    private int riskScore(String risk) {
-        if (risk == null) {
-            return 0;
-        }
-        switch (risk) {
-            case "EXTREME": return 3;
-            case "HIGH":    return 2;
-            case "MODERATE": return 1;
-            default:        return 0;
-        }
-    }
-
-    private int waterScore(String level) {
-        if (level == null) {
-            return 0;
-        }
-        switch (level) {
-            case "CRITICAL": return 3;
-            case "HIGH":     return 2;
-            case "ELEVATED": return 1;
-            default:         return 0;
-        }
-    }
-
-    private String severityLabel(int score) {
-        switch (score) {
-            case 3:  return "CRITICAL";
-            case 2:  return "DANGER";
-            case 1:  return "WARNING";
-            default: return "NORMAL";
-        }
-    }
-
-    private String mapAlertSeverity(String alertLevel) {
-        if (alertLevel == null) {
-            return "NORMAL";
-        }
-        switch (alertLevel) {
-            case "RED":    return "CRITICAL";
-            case "ORANGE": return "DANGER";
-            case "YELLOW": return "WARNING";
-            default:       return "NORMAL";
-        }
-    }
-
-    private String sensorKey(Sensor s) {
-        return sensorKey(s.getLocation().getCode(), s.getTagName());
-    }
-
-    private String sensorKey(String locationCode, String tagName) {
-        return locationCode + "|" + tagName;
-    }
 }

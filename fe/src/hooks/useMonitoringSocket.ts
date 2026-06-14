@@ -4,7 +4,6 @@ import SockJS from 'sockjs-client';
 import type { MonitoringEvent, MonitoringTick } from '@/api/types';
 
 const WS_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090';
-const MAX_FEED = 120;
 
 export interface MonitoringSocketState {
   connected: boolean;
@@ -33,7 +32,7 @@ export function useMonitoringSocket(enabled = true): MonitoringSocketState {
             const tick = JSON.parse(message.body) as MonitoringTick;
             setLatest(tick);
             if (tick.events && tick.events.length > 0) {
-              setFeed((prev) => [...tick.events, ...prev].slice(0, MAX_FEED));
+              setFeed((prev) => [...tick.events, ...prev]);
             }
           } catch (e) {
             console.error('Failed to parse monitoring tick:', e);
