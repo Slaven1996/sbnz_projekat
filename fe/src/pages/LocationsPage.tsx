@@ -13,6 +13,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { RHFTextField } from '@/components/form/RHFTextField';
 import { RHFSelectField } from '@/components/form/RHFSelectField';
 import { RHFCheckboxField } from '@/components/form/RHFCheckboxField';
+import { LocationPicker } from '@/components/locations/LocationPicker';
 import { useTableState } from '@/hooks/useTableState';
 import { useCrudController } from '@/hooks/useCrudController';
 import { useIsAdmin } from '@/store/hooks';
@@ -60,11 +61,13 @@ export function LocationsPage() {
     entity: 'Location',
   });
 
-  const { control, handleSubmit, reset, watch } = useForm<FormValues>({
+  const { control, handleSubmit, reset, watch, setValue } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: emptyValues,
   });
   const hasWeather = watch('hasWeather');
+  const posX = watch('posX');
+  const posY = watch('posY');
 
   useEffect(() => {
     if (crud.formOpen) {
@@ -151,6 +154,7 @@ export function LocationsPage() {
         onSubmit={handleSubmit(onValid)}
         submitting={crud.saving}
         errorMessage={crud.submitError}
+        maxWidth="md"
       >
         <RHFTextField name="code" control={control} label="Code" />
         <RHFTextField name="displayCode" control={control} label="Display Code" />
@@ -171,13 +175,23 @@ export function LocationsPage() {
             label: z.name ? `${z.code} - ${z.name}` : z.code,
           }))}
         />
-        <RHFTextField name="posX" control={control} label="Position X" type="number" />
-        <RHFTextField name="posY" control={control} label="Position Y" type="number" />
+        <LocationPicker
+          lat={posX}
+          lng={posY}
+          onChange={(lat, lng) => {
+            setValue('posX', lat, { shouldValidate: true, shouldDirty: true });
+            setValue('posY', lng, { shouldValidate: true, shouldDirty: true });
+          }}
+        />
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <RHFTextField name="posX" control={control} label="Position X (lat)" type="number" />
+          <RHFTextField name="posY" control={control} label="Position Y (lng)" type="number" />
+        </Box>
         <RHFCheckboxField name="active" control={control} label="Active" />
 
         <Divider />
         <Typography variant="subtitle2" color="text.secondary">
-          Weather condition (nested)
+          Weather condition
         </Typography>
         <RHFCheckboxField name="hasWeather" control={control} label="This location has weather data" />
         {hasWeather && (
