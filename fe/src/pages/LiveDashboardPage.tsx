@@ -51,7 +51,7 @@ export function LiveDashboardPage() {
   const { data: status } = useMonitoringStatus();
   const startMutation = useStartMonitoring();
   const stopMutation = useStopMonitoring();
-  const { connected, latest, feed } = useMonitoringSocket(true);
+  const { connected, latest, feed, reset } = useMonitoringSocket(true);
 
   const [cep, setCep] = useState(false);
   
@@ -84,6 +84,7 @@ export function LiveDashboardPage() {
     if (isActive) {
       stopMutation.mutate();
     } else {
+      reset();
       startMutation.mutate(cep);
     }
   };

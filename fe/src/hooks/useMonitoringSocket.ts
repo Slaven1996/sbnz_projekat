@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import type { MonitoringEvent, MonitoringTick } from '@/api/types';
@@ -9,6 +9,7 @@ export interface MonitoringSocketState {
   connected: boolean;
   latest: MonitoringTick | null;
   feed: MonitoringEvent[];
+  reset: () => void;
 }
 
 export function useMonitoringSocket(enabled = true): MonitoringSocketState {
@@ -16,6 +17,11 @@ export function useMonitoringSocket(enabled = true): MonitoringSocketState {
   const [latest, setLatest] = useState<MonitoringTick | null>(null);
   const [feed, setFeed] = useState<MonitoringEvent[]>([]);
   const clientRef = useRef<Client | null>(null);
+
+  const reset = useCallback(() => {
+    setLatest(null);
+    setFeed([]);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -53,5 +59,5 @@ export function useMonitoringSocket(enabled = true): MonitoringSocketState {
     };
   }, [enabled]);
 
-  return { connected, latest, feed };
+  return { connected, latest, feed, reset };
 }
