@@ -84,7 +84,7 @@ export function TrendDataPage() {
 
   return (
     <Box>
-      <PageHeader title="Trend Data" subtitle="Historical sensor readings (read-only, filterable)" />
+      <PageHeader title="Trend Data" />
 
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">

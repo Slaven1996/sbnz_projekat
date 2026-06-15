@@ -131,7 +131,6 @@ export function UsersPage() {
     <Box>
       <PageHeader
         title="Users"
-        subtitle="Application accounts (ADMIN-only management)"
         addLabel="Add User"
         onAdd={crud.openCreate}
       />

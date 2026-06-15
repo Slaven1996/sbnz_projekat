@@ -74,7 +74,6 @@ export function ZonesPage() {
     <Box>
       <PageHeader
         title="Zones"
-        subtitle="Geographic groupings of monitoring locations"
         addLabel="Add Zone"
         onAdd={isAdmin ? crud.openCreate : undefined}
       />

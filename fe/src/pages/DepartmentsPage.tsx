@@ -75,7 +75,6 @@ export function DepartmentsPage() {
     <Box>
       <PageHeader
         title="Departments"
-        subtitle="Organisational units that users belong to"
         addLabel="Add Department"
         onAdd={isAdmin ? crud.openCreate : undefined}
       />

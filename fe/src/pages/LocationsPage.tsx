@@ -23,12 +23,16 @@ const schema = z
     code: z.string().min(1, 'Code is required').max(50),
     displayCode: z.string().max(50).optional().or(z.literal('')),
     type: z.enum(['RIVER', 'CANAL', 'RESERVOIR', 'PUMP_STATION']),
-    zoneId: z.number().nullable().optional(),
+    zoneId: z.number().nullable(),
     posX: z.number().nullable().optional(),
     posY: z.number().nullable().optional(),
     active: z.boolean(),
     hasWeather: z.boolean(),
     precipitation: z.number().nullable().optional(),
+  })
+  .refine((v) => v.zoneId != null, {
+    message: 'Zone is required',
+    path: ['zoneId'],
   })
   .refine((v) => !v.hasWeather || v.precipitation != null, {
     message: 'Precipitation is required when weather data is enabled',
@@ -127,7 +131,6 @@ export function LocationsPage() {
     <Box>
       <PageHeader
         title="Locations"
-        subtitle="Monitoring sites - weather is managed here, not separately"
         addLabel="Add Location"
         onAdd={isAdmin ? crud.openCreate : undefined}
       />
