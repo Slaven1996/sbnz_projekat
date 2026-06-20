@@ -203,7 +203,6 @@ export function LiveDashboardPage() {
                   <ListItem>
                     <ListItemText
                       primary="No events yet"
-                      secondary={isActive ? 'Waiting for the next tick…' : 'Start monitoring to generate events.'}
                     />
                   </ListItem>
                 )}

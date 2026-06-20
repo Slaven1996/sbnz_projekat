@@ -268,11 +268,7 @@ public class RealTimeSimulationService {
         conf.setOption(ClockTypeOption.get("pseudo"));
         session = kieBase.newKieSession(conf, null);
         clock = session.getSessionClock();
-        // Align the pseudo clock with wall-clock time. The CEP rules build their
-        // alerts with `new Date()` (wall clock); without this the pseudo clock would
-        // start at 1970, so a recovery rule comparing status.timestamp > alert.timestamp
-        // could never see a status "newer" than its alert. Temporal windows are
-        // relative deltas, so they are unaffected by this offset.
+
         clock.advanceTime(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 
         readingHandles.clear();
@@ -295,13 +291,15 @@ public class RealTimeSimulationService {
         tickCount++;
         clock.advanceTime(PSEUDO_STEP_MINUTES, TimeUnit.MINUTES);
         pseudoTime = pseudoTime.plusMinutes(PSEUDO_STEP_MINUTES);
-        Date ts = new Date(clock.getCurrentTime());
+    
+        Date eventTs = new Date(clock.getCurrentTime());
+        Date factTs = new Date();
 
         Map<String, Location> byCode = new LinkedHashMap<>();
         for (Location l : locations) {
             byCode.put(l.getCode(), l);
             if (cepEnabled && !demoSkipHeartbeat(l.getCode())) {
-                session.insert(new HeartbeatEvent(l.getCode(), ts));
+                session.insert(new HeartbeatEvent(l.getCode(), eventTs));
             }
         }
 
@@ -314,11 +312,11 @@ public class RealTimeSimulationService {
             }
             values.put(Helper.sensorKey(s), value);
             Helper.applyReading(session, readingHandles, loc, s.getSensorType(),
-                    s.getTagName(), value, ts);
+                    s.getTagName(), value, factTs);
 
             if (cepEnabled && !demoSkipPumpEvent(s)) {
                 session.insert(new SensorReadingEvent(
-                        loc.getCode(), s.getSensorType(), s.getTagName(), value, ts));
+                        loc.getCode(), s.getSensorType(), s.getTagName(), value, eventTs));
             }
             TrendData td = new TrendData();
             td.setLocationCode(loc.getCode());
@@ -329,7 +327,7 @@ public class RealTimeSimulationService {
         }
 
         if (cepEnabled) {
-            injectDemoFacts(ts);
+            injectDemoFacts(eventTs);
         }
 
         int fired = cepEnabled ? session.fireAllRules() : session.fireAllRules(NO_CEP);
@@ -635,7 +633,7 @@ public class RealTimeSimulationService {
 
         // insert pump operational status to delete the stale duplicate status
         if (tickCount == DEMO_STALE_STATUS_TICK) {
-            Date older = new Date(clock.getCurrentTime() - 60_000L);
+            Date older = new Date(System.currentTimeMillis() - 60_000L);
             session.insert(new PumpOperationalStatus(loc, pumpId, PumpState.ACTIVE, older));
         }
 
