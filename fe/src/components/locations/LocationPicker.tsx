@@ -44,7 +44,7 @@ export function LocationPicker({ lat, lng, onChange, height = 300 }: LocationPic
       <Stack direction="row" spacing={0.5} alignItems="center" color="text.secondary">
         <PlaceIcon sx={{ fontSize: 16 }} />
         <Typography variant="caption">
-          Click on the map to set the position — Position X and Y fill automatically.
+          Click on the map to set the position - Position X and Y fill automatically.
         </Typography>
       </Stack>
       <Box sx={{ height, borderRadius: 1, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>

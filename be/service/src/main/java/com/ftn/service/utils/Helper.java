@@ -1,4 +1,4 @@
-package com.ftn.service.service;
+package com.ftn.service.utils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -107,11 +107,10 @@ public class Helper {
     }
 
     public static SystemAlert latestSystemAlert(KieSession session) {
-        SystemAlert alert = null;
-        for (Object o : session.getObjects(obj -> obj instanceof SystemAlert)) {
-            alert = (SystemAlert) o;
-        }
-        return alert;
+        return session.getObjects(obj -> obj instanceof SystemAlert).stream()
+                .map(SystemAlert.class::cast)
+                .findFirst()
+                .orElse(null);
     }
 
     public static Map<String, LocationStateDTO> snapshot(KieSession session, Map<String, Location> locations) {
@@ -176,7 +175,7 @@ public class Helper {
             transition(changes, code, "recommendation", p == null ? null : p.getRecommendation(), c.getRecommendation());
         }
         if (!Objects.equals(prevAlert, curAlert) && curAlert != null) {
-            changes.add(String.format("SYSTEM ALERT: %s → %s",
+            changes.add(String.format("SYSTEM ALERT: %s -> %s",
                     prevAlert == null ? "-" : prevAlert, curAlert));
         }
         return changes;
@@ -187,11 +186,11 @@ public class Helper {
             return;
         }
         if (from == null) {
-            changes.add(String.format("%s: %s → %s", code, label, to));
+            changes.add(String.format("%s: %s -> %s", code, label, to));
         } else if (to == null) {
-            changes.add(String.format("%s: %s %s → none", code, label, from));
+            changes.add(String.format("%s: %s %s -> none", code, label, from));
         } else {
-            changes.add(String.format("%s: %s %s → %s", code, label, from, to));
+            changes.add(String.format("%s: %s %s -> %s", code, label, from, to));
         }
     }
 

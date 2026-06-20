@@ -168,12 +168,6 @@ export function HistoricalTrendsPage() {
         </>
       )}
 
-      {!isFetching && !data && !isError && (
-        <Typography variant="body2" color="text.secondary">
-          Choose a start and end date and press <strong>Run</strong> to replay the historical
-          readings.
-        </Typography>
-      )}
     </Box>
   );
 }

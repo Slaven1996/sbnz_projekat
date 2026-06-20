@@ -33,6 +33,7 @@ import com.ftn.service.repository.SensorRepository;
 import com.ftn.service.repository.ThresholdConfigRepository;
 import com.ftn.service.repository.TrendDataRepository;
 import com.ftn.service.repository.WeatherConditionRepository;
+import com.ftn.service.utils.Helper;
 
 @Service
 @Transactional(readOnly = true)

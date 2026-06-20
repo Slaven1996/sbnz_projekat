@@ -32,15 +32,22 @@ import com.ftn.model.FloodRiskAssessment;
 import com.ftn.model.FlowRateStatus;
 import com.ftn.model.InterventionRecommendation;
 import com.ftn.model.Location;
+import com.ftn.model.PumpOperationalStatus;
 import com.ftn.model.Sensor;
 import com.ftn.model.StationCapacity;
 import com.ftn.model.SystemAlert;
 import com.ftn.model.ThresholdConfig;
 import com.ftn.model.TrendData;
 import com.ftn.model.WaterLevelStatus;
+import com.ftn.model.enums.LocationType;
+import com.ftn.model.enums.ParameterType;
+import com.ftn.model.enums.PumpEventType;
+import com.ftn.model.enums.PumpState;
 import com.ftn.model.enums.SensorType;
 import com.ftn.model.events.ConnectionLostAlert;
 import com.ftn.model.events.HeartbeatEvent;
+import com.ftn.model.events.PumpConnectionLostAlert;
+import com.ftn.model.events.PumpEvent;
 import com.ftn.model.events.PumpFailureAlert;
 import com.ftn.model.events.RapidWaterLevelRise;
 import com.ftn.model.events.SensorReadingEvent;
@@ -53,6 +60,9 @@ import com.ftn.service.repository.SensorRepository;
 import com.ftn.service.repository.ThresholdConfigRepository;
 import com.ftn.service.repository.TrendDataRepository;
 import com.ftn.service.repository.WeatherConditionRepository;
+import com.ftn.service.utils.Helper;
+import com.ftn.service.utils.SensorValueRange;
+import com.ftn.service.utils.Trend;
 
 @Service
 public class RealTimeSimulationService {
@@ -61,7 +71,20 @@ public class RealTimeSimulationService {
 
     private static final int PSEUDO_STEP_MINUTES = 3;
 
-    private static final int SCENARIO_TICKS = 4;
+    private static final double TREND_START_CHANCE = 0.10;
+    private static final double RISE_BIAS = 0.70;
+    private static final int TREND_MIN_TICKS = 3;
+    private static final int TREND_EXTRA_TICKS = 3;
+
+    private static final int DEMO_PUMP_FAULTY_TICK = 2;    // Rule 6  pump goes FAULTY
+    private static final int DEMO_PUMP_RECOVER_TICK = 3;   // Rule 7  pump back to ACTIVE -> alert cleared
+    private static final int DEMO_STALE_STATUS_TICK = 4;   // Rule 5  stale duplicate status cleaned up
+    private static final int DEMO_RESTART_FROM_TICK = 5;   // Rule 2  pump restart burst...
+    private static final int DEMO_RESTART_TO_TICK = 8;     //         ...4 restarts within the hour
+    private static final int DEMO_HB_GAP_FROM_TICK = 9;    // Rule 3  location stops sending heartbeats...
+    private static final int DEMO_HB_GAP_TO_TICK = 10;     //         ...gap exceeds 5 min (Rule 8 clears at 11)
+    private static final int DEMO_PUMP_GAP_FROM_TICK = 12; // Rule 4  pump stops reporting...
+    private static final int DEMO_PUMP_GAP_TO_TICK = 15;   //         ...gap exceeds 10 min (Rule 9 clears at 16)
 
     private static final AgendaFilter NO_CEP =
             match -> !match.getRule().getName().startsWith("CEP");
@@ -101,8 +124,11 @@ public class RealTimeSimulationService {
     private String previousSystemAlert;
     private Set<String> previousCepAlerts = new HashSet<>();
 
-    private String scenarioRiseKey;
-    private String scenarioFaultKey;
+    private final Map<String, ThresholdConfig> thresholdsByKey = new HashMap<>();
+    private final Map<String, Trend> trends = new HashMap<>();
+
+    private Sensor demoPump;
+    private String demoSilentLocationCode;
 
     public RealTimeSimulationService(LocationRepository locationRepository,
                                      SensorRepository sensorRepository,
@@ -172,6 +198,8 @@ public class RealTimeSimulationService {
         clock = null;
         readingHandles.clear();
         values.clear();
+        trends.clear();
+        thresholdsByKey.clear();
     }
 
     private void loadDomain() {
@@ -191,22 +219,46 @@ public class RealTimeSimulationService {
                 sensors.add(s);
             }
         }
-        thresholds = thresholdConfigRepository.findAll();
+        reloadThresholdMap();
 
         values.clear();
         for (Sensor s : sensors) {
-            values.put(Helper.sensorKey(s), Helper.baseline(s.getSensorType()));
+            double initial = s.getSensorType() == SensorType.PUMP_STATUS
+                    ? 1.0 : valueRangeFor(s).getBaseline();
+            values.put(Helper.sensorKey(s), initial);
         }
 
-        scenarioRiseKey = null;
-        scenarioFaultKey = null;
+        // for RapidWaterLevelRise
+        trends.clear();
         for (Sensor s : sensors) {
-            if (scenarioRiseKey == null && s.getSensorType() == SensorType.WATER_LEVEL) {
-                scenarioRiseKey = Helper.sensorKey(s);
+            if (s.getSensorType() == SensorType.WATER_LEVEL) {
+                trends.put(Helper.sensorKey(s), new Trend(1, TREND_MIN_TICKS + 1));
+                break;
             }
-            if (scenarioFaultKey == null && s.getSensorType() == SensorType.PUMP_STATUS) {
-                scenarioFaultKey = Helper.sensorKey(s);
+        }
+
+        chooseDemoTargets();
+    }
+
+    // Select one pump and one other location to drive the CEP demo script. The pump will be forced to go FAULTY for one tick, then healthy again. The other location will have its heartbeat muted for a few ticks.
+    private void chooseDemoTargets() {
+        demoPump = null;
+        for (Sensor s : sensors) {
+            if (s.getSensorType() == SensorType.PUMP_STATUS) {
+                demoPump = s;
+                break;
             }
+        }
+        String pumpLocationCode = demoPump != null ? demoPump.getLocation().getCode() : null;
+        demoSilentLocationCode = null;
+        for (Location l : locations) {
+            if (!l.getCode().equals(pumpLocationCode)) {
+                demoSilentLocationCode = l.getCode();
+                break;
+            }
+        }
+        if (demoSilentLocationCode == null && !locations.isEmpty()) {
+            demoSilentLocationCode = locations.get(0).getCode();
         }
     }
 
@@ -216,6 +268,12 @@ public class RealTimeSimulationService {
         conf.setOption(ClockTypeOption.get("pseudo"));
         session = kieBase.newKieSession(conf, null);
         clock = session.getSessionClock();
+        // Align the pseudo clock with wall-clock time. The CEP rules build their
+        // alerts with `new Date()` (wall clock); without this the pseudo clock would
+        // start at 1970, so a recovery rule comparing status.timestamp > alert.timestamp
+        // could never see a status "newer" than its alert. Temporal windows are
+        // relative deltas, so they are unaffected by this offset.
+        clock.advanceTime(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 
         readingHandles.clear();
         Helper.seedFacts(session, thresholds, locations, weatherConditionRepository);
@@ -233,6 +291,7 @@ public class RealTimeSimulationService {
         if (!active || session == null) {
             return;
         }
+        refreshThresholds();
         tickCount++;
         clock.advanceTime(PSEUDO_STEP_MINUTES, TimeUnit.MINUTES);
         pseudoTime = pseudoTime.plusMinutes(PSEUDO_STEP_MINUTES);
@@ -241,7 +300,7 @@ public class RealTimeSimulationService {
         Map<String, Location> byCode = new LinkedHashMap<>();
         for (Location l : locations) {
             byCode.put(l.getCode(), l);
-            if (cepEnabled) {
+            if (cepEnabled && !demoSkipHeartbeat(l.getCode())) {
                 session.insert(new HeartbeatEvent(l.getCode(), ts));
             }
         }
@@ -249,11 +308,15 @@ public class RealTimeSimulationService {
         List<TrendData> persisted = new ArrayList<>();
         for (Sensor s : sensors) {
             Location loc = s.getLocation();
-            double value = nextValue(s);
+            double value = demoForcedValue(s);
+            if (Double.isNaN(value)) {
+                value = nextValue(s);
+            }
             values.put(Helper.sensorKey(s), value);
             Helper.applyReading(session, readingHandles, loc, s.getSensorType(),
                     s.getTagName(), value, ts);
-            if (cepEnabled) {
+
+            if (cepEnabled && !demoSkipPumpEvent(s)) {
                 session.insert(new SensorReadingEvent(
                         loc.getCode(), s.getSensorType(), s.getTagName(), value, ts));
             }
@@ -263,6 +326,10 @@ public class RealTimeSimulationService {
             td.setLogTime(pseudoTime);
             td.setTagValue(value);
             persisted.add(td);
+        }
+
+        if (cepEnabled) {
+            injectDemoFacts(ts);
         }
 
         int fired = cepEnabled ? session.fireAllRules() : session.fireAllRules(NO_CEP);
@@ -350,15 +417,15 @@ public class RealTimeSimulationService {
             if (!Objects.equals(oldRisk == null ? "" : oldRisk, newRisk == null ? "" : newRisk)
                     && newRisk != null) {
                 events.add(new MonitoringEventDTO(time, dto.getSeverity(), code,
-                        "Flood risk " + (oldRisk == null || oldRisk.isEmpty() ? "—" : oldRisk)
-                                + " → " + newRisk));
+                        "Flood risk " + (oldRisk == null || oldRisk.isEmpty() ? "-" : oldRisk)
+                                + " -> " + newRisk));
             }
         }
 
         if (!Objects.equals(previousSystemAlert, alertLevel) && alertLevel != null) {
             events.add(new MonitoringEventDTO(time, Helper.mapAlertSeverity(alertLevel), null,
-                    "SYSTEM ALERT: " + (previousSystemAlert == null ? "—" : previousSystemAlert)
-                            + " → " + alertLevel));
+                    "SYSTEM ALERT: " + (previousSystemAlert == null ? "-" : previousSystemAlert)
+                            + " -> " + alertLevel));
         }
         previousSystemAlert = alertLevel;
 
@@ -400,38 +467,181 @@ public class RealTimeSimulationService {
                         "CEP: " + c.getDescription()));
             }
         }
+        for (Object o : session.getObjects(obj -> obj instanceof PumpConnectionLostAlert)) {
+            PumpConnectionLostAlert c = (PumpConnectionLostAlert) o;
+            String key = "PCLA|" + c.getLocationCode() + "|" + c.getPumpId();
+            current.add(key);
+            if (!previousCepAlerts.contains(key)) {
+                events.add(new MonitoringEventDTO(time, "DANGER", c.getLocationCode(),
+                        "CEP: " + c.getDescription()));
+            }
+        }
 
         previousCepAlerts = current;
         return events;
     }
 
     private double nextValue(Sensor s) {
-        String key = Helper.sensorKey(s);
-
-        if (cepEnabled && tickCount <= SCENARIO_TICKS) {
-            if (key.equals(scenarioRiseKey)) {
-                return 200.0 + (tickCount - 1) * 120.0;
-            }
-            if (key.equals(scenarioFaultKey) && tickCount == 2) {
-                return -1.0;
-            }
+        if (s.getSensorType() == SensorType.PUMP_STATUS) {
+            return nextPumpValue();
         }
 
-        double cur = values.getOrDefault(key, Helper.baseline(s.getSensorType()));
-        switch (s.getSensorType()) {
+        String key = Helper.sensorKey(s);
+        SensorValueRange range = valueRangeFor(s);
+        double cur = values.getOrDefault(key, range.getBaseline());
+
+        Trend trend = currentTrend(key);
+        if (trend == null) {
+            // calm behaviour: random walk that drifts back toward the normal value
+            return Helper.meanRevert(random, cur, range.getBaseline(), range.getAmplitude(),
+                    range.getMin(), range.getMax());
+        }
+
+        // active trend: push hard in one direction for a few ticks to drive escalations
+        double noise = (random.nextDouble() - 0.5) * range.getAmplitude() * 0.4;
+        double next = cur + trend.direction() * range.getStep() + noise;
+        next = Math.max(range.getMin(), Math.min(range.getMax(), next));
+        return Math.round(next * 10.0) / 10.0;
+    }
+
+    private double nextPumpValue() {
+        double r = random.nextDouble();
+        if (r < 0.80) {
+            return 1.0;
+        } else if (r < 0.90) {
+            return 0.0;
+        } else if (r < 0.95) {
+            return -1.0;
+        }
+        return -2.0;
+    }
+
+    private Trend currentTrend(String key) {
+        Trend trend = trends.get(key);
+        if (trend != null && trend.isActive()) {
+            trend.consumeTick();
+            return trend;
+        }
+        if (random.nextDouble() < TREND_START_CHANCE) {
+            int direction = random.nextDouble() < RISE_BIAS ? 1 : -1;
+            int length = TREND_MIN_TICKS + random.nextInt(TREND_EXTRA_TICKS);
+            Trend fresh = new Trend(direction, length);
+            fresh.consumeTick();
+            trends.put(key, fresh);
+            return fresh;
+        }
+        trends.remove(key);
+        return null;
+    }
+
+    private SensorValueRange valueRangeFor(Sensor s) {
+        ParameterType pt = parameterType(s.getSensorType());
+        ThresholdConfig tc = pt == null ? null
+                : thresholdsByKey.get(thresholdKey(s.getLocation().getType(), pt));
+        if (tc == null) {
+            double base = Helper.baseline(s.getSensorType());
+            return new SensorValueRange(base, base * 0.2, base * 0.5, base * 1.5, base * 0.2);
+        }
+        double normalMax = tc.getNormalMax();
+        double warningMax = tc.getWarningMax();
+        double criticalMax = tc.getCriticalMax() != null ? tc.getCriticalMax() : warningMax * 1.4;
+        double min = normalMax * 0.25;
+        double max = criticalMax * 1.25;
+        double baseline = normalMax * 0.7;
+        double amplitude = Math.max(10.0, (warningMax - normalMax) * 0.6);
+        double step = (max - min) / 6.0;
+        return new SensorValueRange(baseline, amplitude, min, max, step);
+    }
+
+    private void refreshThresholds() {
+        reloadThresholdMap();
+        for (Object o : session.getObjects(obj -> obj instanceof ThresholdConfig)) {
+            ThresholdConfig fact = (ThresholdConfig) o;
+            ThresholdConfig fresh = thresholdsByKey.get(
+                    thresholdKey(fact.getLocationType(), fact.getParameterType()));
+            if (fresh == null) {
+                continue;
+            }
+            boolean changed = fact.getNormalMax() != fresh.getNormalMax()
+                    || fact.getWarningMax() != fresh.getWarningMax()
+                    || !Objects.equals(fact.getCriticalMax(), fresh.getCriticalMax());
+            if (changed) {
+                fact.setNormalMax(fresh.getNormalMax());
+                fact.setWarningMax(fresh.getWarningMax());
+                fact.setCriticalMax(fresh.getCriticalMax());
+                session.update(session.getFactHandle(fact), fact);
+            }
+        }
+    }
+
+    private void reloadThresholdMap() {
+        thresholds = thresholdConfigRepository.findAll();
+        thresholdsByKey.clear();
+        for (ThresholdConfig tc : thresholds) {
+            thresholdsByKey.put(thresholdKey(tc.getLocationType(), tc.getParameterType()), tc);
+        }
+    }
+
+    private static String thresholdKey(LocationType locationType, ParameterType parameterType) {
+        return locationType + "|" + parameterType;
+    }
+
+    private static ParameterType parameterType(SensorType type) {
+        switch (type) {
             case WATER_LEVEL:
-                return Helper.meanRevert(random, cur, 180.0, 70.0, 30.0, 650.0);
+                return ParameterType.WATER_LEVEL;
             case FLOW_RATE:
-                return Helper.meanRevert(random, cur, 1800.0, 600.0, 100.0, 4500.0);
-            case PUMP_STATUS:
+                return ParameterType.FLOW_RATE;
             default:
-                double r = random.nextDouble();
-                if (r < 0.82) {
-                    return 1.0; 
-                } else if (r < 0.93) {
-                    return 0.0;
-                }
-                return -1.0;
+                return null;
+        }
+    }
+
+    private double demoForcedValue(Sensor s) {
+        if (!cepEnabled || s != demoPump) {
+            return Double.NaN;
+        }
+        if (tickCount == DEMO_PUMP_FAULTY_TICK) {
+            return -1.0; // FAULTY
+        }
+        if (tickCount >= DEMO_PUMP_RECOVER_TICK && tickCount <= DEMO_PUMP_GAP_TO_TICK + 1) {
+            return 1.0;  // keep the pump healthy and predictable for the rest of the script
+        }
+        return Double.NaN;
+    }
+
+    // mute the demo location's heartbeat for a few ticks (gap > 5 min) to trigger the "connection lost" rule.
+    private boolean demoSkipHeartbeat(String locationCode) {
+        return cepEnabled
+                && locationCode.equals(demoSilentLocationCode)
+                && tickCount >= DEMO_HB_GAP_FROM_TICK
+                && tickCount <= DEMO_HB_GAP_TO_TICK;
+    }
+
+    // mute the demo pump's heartbeat for a few ticks (gap > 10 min) to trigger the "pump connection lost" rule.
+    private boolean demoSkipPumpEvent(Sensor s) {
+        return cepEnabled
+                && s == demoPump
+                && tickCount >= DEMO_PUMP_GAP_FROM_TICK
+                && tickCount <= DEMO_PUMP_GAP_TO_TICK;
+    }
+
+    private void injectDemoFacts(Date ts) {
+        if (demoPump == null) {
+            return;
+        }
+        Location loc = demoPump.getLocation();
+        String pumpId = demoPump.getTagName();
+
+        // insert pump operational status to delete the stale duplicate status
+        if (tickCount == DEMO_STALE_STATUS_TICK) {
+            Date older = new Date(clock.getCurrentTime() - 60_000L);
+            session.insert(new PumpOperationalStatus(loc, pumpId, PumpState.ACTIVE, older));
+        }
+
+        // insert pump restart events to trigger the "too many restarts" rule
+        if (tickCount >= DEMO_RESTART_FROM_TICK && tickCount <= DEMO_RESTART_TO_TICK) {
+            session.insert(new PumpEvent(loc.getCode(), pumpId, PumpEventType.RESTART, ts));
         }
     }
 

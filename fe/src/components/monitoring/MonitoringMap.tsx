@@ -64,7 +64,7 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
             pathOptions={{ color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 0.85 }}
           >
             <Tooltip direction="top" offset={[0, -4]}>
-              {p.name} — {severity}
+              {p.name} - {severity}
             </Tooltip>
             <Popup>
               <Box sx={{ minWidth: 200 }}>
@@ -91,7 +91,7 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
                   </Stack>
                 ) : (
                   <Typography variant="caption" color="text.secondary">
-                    No live data yet — start monitoring.
+                    No live data yet - start monitoring.
                   </Typography>
                 )}
               </Box>
