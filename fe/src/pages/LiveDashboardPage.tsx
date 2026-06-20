@@ -25,7 +25,7 @@ import {
   useStartMonitoring,
   useStopMonitoring,
 } from '@/api/monitoring';
-import { locationsResource } from '@/api/resources';
+import { locationsResource, zonesResource } from '@/api/resources';
 import { MonitoringMap, SEVERITY_COLOR, type MapPoint } from '@/components/monitoring/MonitoringMap';
 import { useMonitoringSocket } from '@/hooks/useMonitoringSocket';
 import { PageHeader } from '@/components/PageHeader';
@@ -62,6 +62,13 @@ export function LiveDashboardPage() {
   const isActive = status?.active ?? false;
 
   const { data: locations } = locationsResource.useOptions();
+  const { data: zones } = zonesResource.useOptions();
+
+  const zoneNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    (zones ?? []).forEach((z) => map.set(z.id, z.name || z.code));
+    return map;
+  }, [zones]);
 
   const stateByCode = useMemo(() => {
     const map = new Map<string, NonNullable<typeof latest>['locations'][number]>();
@@ -74,11 +81,14 @@ export function LiveDashboardPage() {
     return base.map((l) => ({
       code: l.code,
       name: l.displayCode || l.code,
+      displayCode: l.displayCode,
+      type: l.type,
+      zoneName: l.zoneId != null ? zoneNameById.get(l.zoneId) ?? l.zoneCode : l.zoneCode,
       lat: l.posX as number,
       lng: l.posY as number,
       state: stateByCode.get(l.code),
     }));
-  }, [locations, stateByCode]);
+  }, [locations, stateByCode, zoneNameById]);
 
   const handleToggle = () => {
     if (isActive) {

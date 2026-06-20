@@ -14,6 +14,9 @@ export const SEVERITY_COLOR: Record<string, string> = {
 export interface MapPoint {
   code: string;
   name: string;
+  displayCode?: string | null;
+  type?: string | null;
+  zoneName?: string | null;
   lat: number;
   lng: number;
   state?: MonitoringLocationState;
@@ -64,7 +67,15 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
             pathOptions={{ color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 0.85 }}
           >
             <Tooltip direction="top" offset={[0, -4]}>
-              {p.name} - {severity}
+              <Box sx={{ minWidth: 150 }}>
+                <Stack spacing={0.25}>
+                  <Row label="Code" value={p.code} />
+                  <Row label="Display code" value={p.displayCode} />
+                  <Row label="Type" value={p.type} />
+                  <Row label="Zone" value={p.zoneName} />
+                  <Row label="Status" value={severity} />
+                </Stack>
+              </Box>
             </Tooltip>
             <Popup>
               <Box sx={{ minWidth: 200 }}>
