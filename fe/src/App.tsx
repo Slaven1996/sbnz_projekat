@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from '@/layout/MainLayout';
+import { NavigationGuardProvider } from '@/components/NavigationGuard';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { RoleRoute } from '@/routes/RoleRoute';
 import { LoginPage } from '@/pages/LoginPage';
@@ -22,7 +23,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
+        <Route element={<NavigationGuardProvider><MainLayout /></NavigationGuardProvider>}>
           <Route index element={<Navigate to="/live-dashboard" replace />} />
           <Route path="live-dashboard" element={<LiveDashboardPage />} />
           <Route path="historical-trends" element={<HistoricalTrendsPage />} />

@@ -27,6 +27,7 @@ import {
 } from '@/api/monitoring';
 import { locationsResource, zonesResource } from '@/api/resources';
 import { MonitoringMap, SEVERITY_COLOR, type MapPoint } from '@/components/monitoring/MonitoringMap';
+import { useNavigationBlocker } from '@/components/NavigationGuard';
 import { useMonitoringSocket } from '@/hooks/useMonitoringSocket';
 import { PageHeader } from '@/components/PageHeader';
 import { useAuth } from '@/store/hooks';
@@ -101,6 +102,17 @@ export function LiveDashboardPage() {
 
   const busy = startMutation.isPending || stopMutation.isPending;
   const alertLevel = latest?.systemAlertLevel ?? null;
+
+  useNavigationBlocker({
+    when: isActive,
+    title: 'Stop monitoring?',
+    message: 'Live monitoring is running. Leaving this page will stop it. Do you want to continue?',
+    confirmLabel: 'Leave & stop',
+    cancelLabel: 'Stay',
+    onConfirm: () => {
+      stopMutation.mutate();
+    },
+  });
 
   return (
     <Box>

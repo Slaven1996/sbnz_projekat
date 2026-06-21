@@ -15,6 +15,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAuth } from '@/store/hooks';
 import { logout } from '@/store/authSlice';
+import { useNavigationGuard } from '@/components/NavigationGuard';
 import { DRAWER_WIDTH, Sidebar } from './Sidebar';
 
 export function MainLayout() {
@@ -23,11 +24,14 @@ export function MainLayout() {
   const { email, role } = useAuth();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { attemptNavigate } = useNavigationGuard();
 
   const handleLogout = () => {
     setAnchorEl(null);
-    dispatch(logout());
-    navigate('/login', { replace: true });
+    attemptNavigate(() => {
+      dispatch(logout());
+      navigate('/login', { replace: true });
+    });
   };
 
   return (
@@ -73,7 +77,7 @@ export function MainLayout() {
             <MenuItem
               onClick={() => {
                 setAnchorEl(null);
-                navigate('/profile');
+                attemptNavigate(() => navigate('/profile'));
               }}
             >
               My Profile

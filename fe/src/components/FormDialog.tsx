@@ -7,8 +7,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   type Breakpoint,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 export interface FormDialogProps {
   open: boolean;
@@ -36,7 +38,17 @@ export function FormDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth={maxWidth} fullWidth>
       <Box component="form" onSubmit={onSubmit} noValidate>
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle sx={{ pr: 6 }}>
+          {title}
+          <IconButton
+            aria-label="close"
+            onClick={onClose}
+            disabled={submitting}
+            sx={{ position: 'absolute', right: 8, top: 8, color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
         <DialogContent>
           {errorMessage && (
             <Alert severity="error" sx={{ mb: 2 }}>

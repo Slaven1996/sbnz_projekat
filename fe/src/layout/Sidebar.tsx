@@ -12,6 +12,7 @@ import {
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/store/hooks';
+import { useNavigationGuard } from '@/components/NavigationGuard';
 import { visibleNavItems } from './navConfig';
 
 export const DRAWER_WIDTH = 240;
@@ -25,6 +26,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const { role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { attemptNavigate } = useNavigationGuard();
   const items = visibleNavItems(role);
 
   const content = (
@@ -44,8 +46,14 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               key={item.path}
               selected={selected}
               onClick={() => {
-                navigate(item.path);
-                onClose();
+                if (selected) {
+                  onClose();
+                  return;
+                }
+                attemptNavigate(() => {
+                  navigate(item.path);
+                  onClose();
+                });
               }}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
