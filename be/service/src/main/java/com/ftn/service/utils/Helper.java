@@ -76,22 +76,33 @@ public class Helper {
         }
     }
 
-    public static FactHandle applyReading(KieSession session, Map<String, FactHandle> handles,
+    public static void applyReading(KieSession session, Map<String, FactHandle> handles,
                                           Location loc, SensorType type, String tagName,
                                           double value, Date ts) {
         String handleKey = sensorKey(loc.getCode(), tagName);
         FactHandle handle = handles.get(handleKey);
         if (handle == null) {
             SensorReading reading = new SensorReading(loc, type, tagName, value, ts);
-            FactHandle inserted = session.insert(reading);
-            handles.put(handleKey, inserted);
-            return inserted;
+            handles.put(handleKey, session.insert(reading));
+            return;
         }
         SensorReading reading = (SensorReading) session.getObject(handle);
         reading.setValue(value);
         reading.setTimestamp(ts);
         session.update(handle, reading);
-        return handle;
+    }
+
+    public static void applyWeather(KieSession session, Map<String, FactHandle> handles,
+                                    Location loc, double precipitation) {
+        FactHandle handle = handles.get(loc.getCode());
+        if (handle == null) {
+            WeatherCondition weather = new WeatherCondition(loc, precipitation);
+            handles.put(loc.getCode(), session.insert(weather));
+            return;
+        }
+        WeatherCondition weather = (WeatherCondition) session.getObject(handle);
+        weather.setPrecipitation(precipitation);
+        session.update(handle, weather);
     }
 
     public static <T> Map<String, T> index(KieSession session, Class<T> type, Function<T, Location> locator) {

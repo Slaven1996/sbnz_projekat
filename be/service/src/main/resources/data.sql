@@ -79,6 +79,18 @@ INSERT IGNORE INTO weather_conditions (id, location_id, precipitation, last_upda
     (6, 6, 3.0, '2026-05-04 06:00:00'),
     (7, 7, 5.0, '2026-05-04 06:00:00');
 
+INSERT IGNORE INTO weather_observations (id, location_code, observed_at, precipitation) VALUES
+    ( 1, 'LOC_RIJEKA', '2026-05-04 06:00:00',  5.0),
+    ( 2, 'LOC_RIJEKA', '2026-05-04 18:00:00', 25.0),
+    ( 3, 'LOC_RIJEKA', '2026-05-05 06:00:00', 45.0),
+    ( 4, 'LOC_RIJEKA', '2026-05-05 12:00:00', 55.0),
+    ( 5, 'LOC_RIJEKA', '2026-05-05 18:00:00', 15.0),
+    ( 6, 'LOC_RIJEKA', '2026-05-06 00:00:00',  6.0),
+    ( 7, 'LOC_RIJEKA', '2026-05-06 12:00:00',  4.0),
+    ( 8, 'LOC_PUMPA',  '2026-05-04 06:00:00',  3.0),
+    ( 9, 'LOC_PUMPA',  '2026-05-05 12:00:00',  8.0),
+    (10, 'LOC_PUMPA',  '2026-05-06 00:00:00',  4.0);
+
 INSERT IGNORE INTO sensors (id, location_id, tag_name, display_code, sensor_type, unit_id) VALUES
     (1, 1, 'RIJEKA_WL', 'Water level', 'WATER_LEVEL', 1),
     (2, 1, 'RIJEKA_FR', 'Flow rate',   'FLOW_RATE',   2),

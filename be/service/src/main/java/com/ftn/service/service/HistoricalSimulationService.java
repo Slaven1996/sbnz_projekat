@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,8 @@ import com.ftn.model.Sensor;
 import com.ftn.model.SystemAlert;
 import com.ftn.model.ThresholdConfig;
 import com.ftn.model.TrendData;
+import com.ftn.model.WeatherCondition;
+import com.ftn.model.WeatherObservation;
 import com.ftn.model.enums.SensorType;
 import com.ftn.service.dto.simulation.LocationStateDTO;
 import com.ftn.service.dto.simulation.SimulationResultDTO;
@@ -33,6 +37,7 @@ import com.ftn.service.repository.SensorRepository;
 import com.ftn.service.repository.ThresholdConfigRepository;
 import com.ftn.service.repository.TrendDataRepository;
 import com.ftn.service.repository.WeatherConditionRepository;
+import com.ftn.service.repository.WeatherObservationRepository;
 import com.ftn.service.utils.Helper;
 
 @Service
@@ -43,6 +48,7 @@ public class HistoricalSimulationService {
     private final LocationRepository locationRepository;
     private final ThresholdConfigRepository thresholdConfigRepository;
     private final WeatherConditionRepository weatherConditionRepository;
+    private final WeatherObservationRepository weatherObservationRepository;
     private final SensorRepository sensorRepository;
     private final RuleTemplateService ruleTemplateService;
 
@@ -50,12 +56,14 @@ public class HistoricalSimulationService {
                                        LocationRepository locationRepository,
                                        ThresholdConfigRepository thresholdConfigRepository,
                                        WeatherConditionRepository weatherConditionRepository,
+                                       WeatherObservationRepository weatherObservationRepository,
                                        SensorRepository sensorRepository,
                                        RuleTemplateService ruleTemplateService) {
         this.trendDataRepository = trendDataRepository;
         this.locationRepository = locationRepository;
         this.thresholdConfigRepository = thresholdConfigRepository;
         this.weatherConditionRepository = weatherConditionRepository;
+        this.weatherObservationRepository = weatherObservationRepository;
         this.sensorRepository = sensorRepository;
         this.ruleTemplateService = ruleTemplateService;
     }
@@ -68,7 +76,7 @@ public class HistoricalSimulationService {
         if (startDate.isAfter(endDate)) {
             throw new BadRequestException("startDate must be before or equal to endDate");
         }
-        SimulationStep stepEnum = "DAY".equalsIgnoreCase(stepUnit) ? SimulationStep.DAY : SimulationStep.HOUR;
+        SimulationStep stepEnum = stepUnit != null && stepUnit.equalsIgnoreCase("DAY") ? SimulationStep.DAY : SimulationStep.HOUR;
         ChronoUnit step = stepEnum == SimulationStep.DAY ? ChronoUnit.DAYS : ChronoUnit.HOURS;
 
         List<TrendData> readings = trendDataRepository.searchAll(
@@ -107,6 +115,20 @@ public class HistoricalSimulationService {
         try {
             Helper.seedFacts(session, thresholds, locations.values(), weatherConditionRepository);
 
+            Map<String, FactHandle> weatherHandles = new HashMap<>();
+            for (Object o : session.getObjects(obj -> obj instanceof WeatherCondition)) {
+                WeatherCondition wc = (WeatherCondition) o;
+                if (wc.getLocation() != null) {
+                    weatherHandles.put(wc.getLocation().getCode(), session.getFactHandle(wc));
+                }
+            }
+            Map<String, NavigableMap<LocalDateTime, Double>> weatherSeries = new HashMap<>();
+            for (WeatherObservation obs : weatherObservationRepository
+                    .findByLocationCodeInOrderByObservedAtAsc(locations.keySet())) {
+                weatherSeries.computeIfAbsent(obs.getLocationCode(), k -> new TreeMap<>())
+                        .put(obs.getObservedAt(), obs.getPrecipitation());
+            }
+
             Map<LocalDateTime, List<TrendData>> steps = Helper.groupByStep(readings, step);
 
             List<TimelineEventDTO> timeline = new ArrayList<>();
@@ -132,6 +154,8 @@ public class HistoricalSimulationService {
                     event.getAppliedReadings().add(String.format("%s / %s (%s) = %s",
                             td.getLocationCode(), td.getTagName(), type, Helper.trim(td.getTagValue())));
                 }
+
+                applyWeatherForStep(session, weatherHandles, weatherSeries, locations, entry.getKey());
 
                 int fired = session.fireAllRules();
                 event.setFiredRules(fired);
@@ -162,6 +186,21 @@ public class HistoricalSimulationService {
             return result;
         } finally {
             session.dispose();
+        }
+    }
+
+    private void applyWeatherForStep(KieSession session, Map<String, FactHandle> weatherHandles,
+                                     Map<String, NavigableMap<LocalDateTime, Double>> weatherSeries,
+                                     Map<String, Location> locations, LocalDateTime stepTime) {
+        for (Map.Entry<String, NavigableMap<LocalDateTime, Double>> e : weatherSeries.entrySet()) {
+            Location loc = locations.get(e.getKey());
+            if (loc == null) {
+                continue;
+            }
+            NavigableMap<LocalDateTime, Double> series = e.getValue();
+            Map.Entry<LocalDateTime, Double> floor = series.floorEntry(stepTime);
+            double precipitation = floor != null ? floor.getValue() : series.firstEntry().getValue();
+            Helper.applyWeather(session, weatherHandles, loc, precipitation);
         }
     }
 
