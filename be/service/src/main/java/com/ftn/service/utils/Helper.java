@@ -282,4 +282,16 @@ public class Helper {
             default:       return "NORMAL";
         }
     }
+
+    public static String mapPrioritySeverity(String priority) {
+        if (priority == null) {
+            return "NORMAL";
+        }
+        switch (priority) {
+            case "CRITICAL": return "CRITICAL";
+            case "HIGH":     return "DANGER";
+            case "MEDIUM":   return "WARNING";
+            default:         return "NORMAL";
+        }
+    }
 }

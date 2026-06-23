@@ -133,12 +133,6 @@ export function LiveDashboardPage() {
           color={isActive ? 'success' : 'default'}
           variant={isActive ? 'filled' : 'outlined'}
         />
-        <Chip
-          size="small"
-          label={connected ? 'WebSocket connected' : 'WebSocket offline'}
-          color={connected ? 'info' : 'default'}
-          variant="outlined"
-        />
         {latest && (
           <>
             <Chip size="small" variant="outlined" label={`Sim clock: ${latest.pseudoTime?.replace('T', ' ')}`} />

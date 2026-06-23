@@ -103,7 +103,8 @@ public class HistoricalSimulationService {
         }
 
         Map<String, SensorType> sensorTypes = new HashMap<>();
-        for (Sensor s : sensorRepository.findAll()) {
+        List<Sensor> sensors = sensorRepository.findAll();
+        for (Sensor s : sensors) {
             if (s.getLocation() != null) {
                 sensorTypes.put(Helper.sensorKey(s.getLocation().getCode(), s.getTagName()),
                         s.getSensorType());

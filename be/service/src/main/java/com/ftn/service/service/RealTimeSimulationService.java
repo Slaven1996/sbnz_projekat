@@ -121,6 +121,7 @@ public class RealTimeSimulationService {
     private final Map<String, Double> values = new HashMap<>();
 
     private final Map<String, String> previousRisk = new HashMap<>();
+    private final Map<String, String> previousRecommendation = new HashMap<>();
     private String previousSystemAlert;
     private Set<String> previousCepAlerts = new HashSet<>();
 
@@ -156,6 +157,7 @@ public class RealTimeSimulationService {
         this.pseudoTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         this.tickCount = 0;
         this.previousRisk.clear();
+        this.previousRecommendation.clear();
         this.previousSystemAlert = null;
         this.previousCepAlerts = new HashSet<>();
         this.active = true;
@@ -417,6 +419,28 @@ public class RealTimeSimulationService {
                 events.add(new MonitoringEventDTO(time, dto.getSeverity(), code,
                         "Flood risk " + (oldRisk == null || oldRisk.isEmpty() ? "-" : oldRisk)
                                 + " -> " + newRisk));
+            }
+
+            String newRec = dto.getRecommendation();
+            String oldRec = previousRecommendation.put(code, newRec == null ? "" : newRec);
+            oldRec = oldRec == null ? "" : oldRec;
+            if (!Objects.equals(oldRec, newRec == null ? "" : newRec)) {
+                String recSeverity = Helper.mapPrioritySeverity(dto.getRecommendationPriority());
+                String message;
+                if (newRec == null) {
+                    message = "Recommendation cleared (was " + oldRec + ")";
+                } else if (oldRec.isEmpty()) {
+                    message = "Recommendation: " + newRec
+                            + (dto.getRecommendationPriority() != null
+                                    ? " (" + dto.getRecommendationPriority() + ")" : "")
+                            + (dto.getRecommendationDescription() != null
+                                    ? " - " + dto.getRecommendationDescription() : "");
+                } else {
+                    message = "Recommendation " + oldRec + " -> " + newRec
+                            + (dto.getRecommendationDescription() != null
+                                    ? " - " + dto.getRecommendationDescription() : "");
+                }
+                events.add(new MonitoringEventDTO(time, recSeverity, code, message));
             }
         }
 
