@@ -121,6 +121,7 @@ public class RealTimeSimulationService {
     private final Map<String, Double> values = new HashMap<>();
 
     private final Map<String, String> previousRisk = new HashMap<>();
+    private final Map<String, String> previousCapacity = new HashMap<>();
     private final Map<String, String> previousRecommendation = new HashMap<>();
     private String previousSystemAlert;
     private Set<String> previousCepAlerts = new HashSet<>();
@@ -157,6 +158,7 @@ public class RealTimeSimulationService {
         this.pseudoTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         this.tickCount = 0;
         this.previousRisk.clear();
+        this.previousCapacity.clear();
         this.previousRecommendation.clear();
         this.previousSystemAlert = null;
         this.previousCepAlerts = new HashSet<>();
@@ -206,7 +208,8 @@ public class RealTimeSimulationService {
 
     private void loadDomain() {
         locations = new ArrayList<>();
-        for (Location l : locationRepository.findAll()) {
+        List<Location> allLocations = locationRepository.findAll();
+        for (Location l : allLocations) {
             if (l.isActive() && l.getPosX() != null && l.getPosY() != null) {
                 locations.add(l);
             }
@@ -216,7 +219,8 @@ public class RealTimeSimulationService {
             activeLocationIds.add(l.getId());
         }
         sensors = new ArrayList<>();
-        for (Sensor s : sensorRepository.findAll()) {
+        List<Sensor> allSensors = sensorRepository.findAll();
+        for (Sensor s : allSensors) {
             if (s.getLocation() != null && activeLocationIds.contains(s.getLocation().getId())) {
                 sensors.add(s);
             }
@@ -419,6 +423,18 @@ public class RealTimeSimulationService {
                 events.add(new MonitoringEventDTO(time, dto.getSeverity(), code,
                         "Flood risk " + (oldRisk == null || oldRisk.isEmpty() ? "-" : oldRisk)
                                 + " -> " + newRisk));
+            }
+
+            String newCap = dto.getCapacityLevel();
+            String oldCap = previousCapacity.put(code, newCap == null ? "" : newCap);
+            oldCap = oldCap == null ? "" : oldCap;
+            if (!Objects.equals(oldCap, newCap == null ? "" : newCap) && newCap != null) {
+                String pumps = dto.getTotalPumps() != null
+                        ? " (" + (dto.getActivePumps() != null ? dto.getActivePumps() : 0)
+                                + "/" + dto.getTotalPumps() + ")"
+                        : "";
+                events.add(new MonitoringEventDTO(time, Helper.mapCapacitySeverity(newCap), code,
+                        "Pump capacity " + (oldCap.isEmpty() ? "-" : oldCap) + " -> " + newCap + pumps));
             }
 
             String newRec = dto.getRecommendation();

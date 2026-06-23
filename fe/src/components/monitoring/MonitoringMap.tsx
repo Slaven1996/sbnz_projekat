@@ -75,6 +75,12 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
                   <Row label="Zone" value={p.zoneName} />
                   <Row label="Status" value={severity} />
                   <Row
+                    label="Pumps"
+                    value={s?.capacityLevel
+                      ? `${s.capacityLevel}${s.totalPumps ? ` (${s.activePumps ?? 0}/${s.totalPumps})` : ''}`
+                      : null}
+                  />
+                  <Row
                     label="Action"
                     value={s?.recommendation
                       ? `${s.recommendation}${s.recommendationPriority ? ` (${s.recommendationPriority})` : ''}`

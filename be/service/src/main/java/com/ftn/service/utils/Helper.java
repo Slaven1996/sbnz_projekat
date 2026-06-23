@@ -294,4 +294,16 @@ public class Helper {
             default:         return "NORMAL";
         }
     }
+
+    public static String mapCapacitySeverity(String capacityLevel) {
+        if (capacityLevel == null) {
+            return "NORMAL";
+        }
+        switch (capacityLevel) {
+            case "OFFLINE": return "CRITICAL";
+            case "MINIMAL": return "DANGER";
+            case "REDUCED": return "WARNING";
+            default:        return "NORMAL";
+        }
+    }
 }
