@@ -38,11 +38,11 @@ const pulse = keyframes`
   100% { opacity: 1; }
 `;
 
-const ALERT_CHIP_COLOR: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
-  GREEN: 'success',
-  YELLOW: 'warning',
-  ORANGE: 'warning',
-  RED: 'error',
+const ALERT_CHIP_STYLE: Record<string, { bg: string; fg: string }> = {
+  GREEN: { bg: '#2e7d32', fg: '#fff' },
+  YELLOW: { bg: '#fbc02d', fg: '#212121' },
+  ORANGE: { bg: '#ef6c00', fg: '#fff' },
+  RED: { bg: '#c62828', fg: '#fff' },
 };
 
 export function LiveDashboardPage() {
@@ -149,8 +149,12 @@ export function LiveDashboardPage() {
         {alertLevel && (
           <Chip
             size="small"
-            color={ALERT_CHIP_COLOR[alertLevel] ?? 'default'}
             label={`SYSTEM ALERT: ${alertLevel}`}
+            sx={{
+              fontWeight: 600,
+              bgcolor: ALERT_CHIP_STYLE[alertLevel]?.bg,
+              color: ALERT_CHIP_STYLE[alertLevel]?.fg,
+            }}
           />
         )}
       </Stack>
