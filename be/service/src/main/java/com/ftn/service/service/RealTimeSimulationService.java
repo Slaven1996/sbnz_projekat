@@ -39,6 +39,7 @@ import com.ftn.model.SystemAlert;
 import com.ftn.model.ThresholdConfig;
 import com.ftn.model.TrendData;
 import com.ftn.model.WaterLevelStatus;
+import com.ftn.model.WeatherCondition;
 import com.ftn.model.enums.LocationType;
 import com.ftn.model.enums.ParameterType;
 import com.ftn.model.enums.PumpEventType;
@@ -76,15 +77,21 @@ public class RealTimeSimulationService {
     private static final int TREND_MIN_TICKS = 3;
     private static final int TREND_EXTRA_TICKS = 3;
 
-    private static final int DEMO_PUMP_FAULTY_TICK = 2;    // Rule 6  pump goes FAULTY
-    private static final int DEMO_PUMP_RECOVER_TICK = 3;   // Rule 7  pump back to ACTIVE -> alert cleared
-    private static final int DEMO_STALE_STATUS_TICK = 4;   // Rule 5  stale duplicate status cleaned up
-    private static final int DEMO_RESTART_FROM_TICK = 5;   // Rule 2  pump restart burst...
-    private static final int DEMO_RESTART_TO_TICK = 8;     //         ...4 restarts within the hour
-    private static final int DEMO_HB_GAP_FROM_TICK = 9;    // Rule 3  location stops sending heartbeats...
-    private static final int DEMO_HB_GAP_TO_TICK = 10;     //         ...gap exceeds 5 min (Rule 8 clears at 11)
-    private static final int DEMO_PUMP_GAP_FROM_TICK = 12; // Rule 4  pump stops reporting...
-    private static final int DEMO_PUMP_GAP_TO_TICK = 15;   //         ...gap exceeds 10 min (Rule 9 clears at 16)
+    private static final double RAIN_BURST_CHANCE = 0.05;
+    private static final double RAIN_BURST_MIN = 35.0;
+    private static final double RAIN_BURST_MAX = 80.0;
+    private static final double RAIN_DECAY_PER_TICK = 8.0;
+
+    private static final int DEMO_WATER_RISE_TO_TICK = 3;  // Rule 1  water forced to climb ticks 1-3 -> rapid rise fires at tick 2
+    private static final int DEMO_PUMP_FAULTY_TICK = 4;    // Rule 6  pump goes FAULTY
+    private static final int DEMO_PUMP_RECOVER_TICK = 5;   // Rule 7  pump back to ACTIVE -> failure alert cleared
+    private static final int DEMO_STALE_STATUS_TICK = 6;   // Rule 5  stale duplicate status cleaned up
+    private static final int DEMO_RESTART_FROM_TICK = 7;   // Rule 2  pump restart burst...
+    private static final int DEMO_RESTART_TO_TICK = 10;    //         ...4 restarts within the hour -> fires ~tick 9
+    private static final int DEMO_HB_GAP_FROM_TICK = 12;   // Rule 3  station stops sending heartbeats...
+    private static final int DEMO_HB_GAP_TO_TICK = 13;     //         ...gap exceeds 5 min -> fires tick 13 (Rule 8 clears at 14)
+    private static final int DEMO_PUMP_GAP_FROM_TICK = 16; // Rule 4  pump stops reporting...
+    private static final int DEMO_PUMP_GAP_TO_TICK = 19;   //         ...gap exceeds 10 min -> fires tick 19 (Rule 9 clears at 20)
 
     private static final AgendaFilter NO_CEP =
             match -> !match.getRule().getName().startsWith("CEP");
@@ -129,8 +136,9 @@ public class RealTimeSimulationService {
     private final Map<String, ThresholdConfig> thresholdsByKey = new HashMap<>();
     private final Map<String, Trend> trends = new HashMap<>();
 
-    private Sensor demoPump;
-    private String demoSilentLocationCode;
+    private Sensor demoPumpCEP;
+    private Sensor demoWaterSensorCEP;
+    private String demoSilentLocationCodeCEP;
 
     public RealTimeSimulationService(LocationRepository locationRepository,
                                      SensorRepository sensorRepository,
@@ -234,37 +242,38 @@ public class RealTimeSimulationService {
             values.put(Helper.sensorKey(s), initial);
         }
 
-        // for RapidWaterLevelRise
         trends.clear();
-        for (Sensor s : sensors) {
-            if (s.getSensorType() == SensorType.WATER_LEVEL) {
-                trends.put(Helper.sensorKey(s), new Trend(1, TREND_MIN_TICKS + 1));
-                break;
-            }
-        }
 
-        chooseDemoTargets();
+        if (cepEnabled) {
+            chooseDemoTargetsForCEP();
+        }
     }
 
-    // Select one pump and one other location to drive the CEP demo script. The pump will be forced to go FAULTY for one tick, then healthy again. The other location will have its heartbeat muted for a few ticks.
-    private void chooseDemoTargets() {
-        demoPump = null;
+    private void chooseDemoTargetsForCEP() {
+        demoPumpCEP = null;
         for (Sensor s : sensors) {
             if (s.getSensorType() == SensorType.PUMP_STATUS) {
-                demoPump = s;
+                demoPumpCEP = s;
                 break;
             }
         }
-        String pumpLocationCode = demoPump != null ? demoPump.getLocation().getCode() : null;
-        demoSilentLocationCode = null;
+        demoWaterSensorCEP = null;
+        for (Sensor s : sensors) {
+            if (s.getSensorType() == SensorType.WATER_LEVEL) {
+                demoWaterSensorCEP = s;
+                break;
+            }
+        }
+        String pumpLocationCode = demoPumpCEP != null ? demoPumpCEP.getLocation().getCode() : null;
+        demoSilentLocationCodeCEP = null;
         for (Location l : locations) {
             if (!l.getCode().equals(pumpLocationCode)) {
-                demoSilentLocationCode = l.getCode();
+                demoSilentLocationCodeCEP = l.getCode();
                 break;
             }
         }
-        if (demoSilentLocationCode == null && !locations.isEmpty()) {
-            demoSilentLocationCode = locations.get(0).getCode();
+        if (demoSilentLocationCodeCEP == null && !locations.isEmpty()) {
+            demoSilentLocationCodeCEP = locations.get(0).getCode();
         }
     }
 
@@ -312,10 +321,16 @@ public class RealTimeSimulationService {
         List<TrendData> persisted = new ArrayList<>();
         for (Sensor s : sensors) {
             Location loc = s.getLocation();
-            double value = demoForcedValue(s);
-            if (Double.isNaN(value)) {
+
+            double value;
+            if (cepEnabled && demoForcesWater(s)) {
+                value = demoWaterValue(s);
+            } else if (cepEnabled && demoForcesPump(s)) {
+                value = demoPumpValue();
+            } else {
                 value = nextValue(s);
             }
+
             values.put(Helper.sensorKey(s), value);
             Helper.applyReading(session, readingHandles, loc, s.getSensorType(),
                     s.getTagName(), value, factTs);
@@ -335,6 +350,8 @@ public class RealTimeSimulationService {
         if (cepEnabled) {
             injectDemoFacts(eventTs);
         }
+
+        mutateWeather();
 
         int fired = cepEnabled ? session.fireAllRules() : session.fireAllRules(NO_CEP);
 
@@ -515,6 +532,32 @@ public class RealTimeSimulationService {
             }
         }
 
+        for (String goneKey : previousCepAlerts) {
+            if (current.contains(goneKey)) {
+                continue;
+            }
+            String[] parts = goneKey.split("\\|");
+            String type = parts[0];
+            String locationCode = parts.length > 1 ? parts[1] : null;
+            String message;
+            switch (type) {
+                case "PFA": 
+                    message = "CEP: pump failure resolved"; 
+                    break;
+                case "CLA":  
+                    message = "CEP: station communication restored"; 
+                    break;
+                case "PCLA": 
+                    message = "CEP: pump communication restored"; 
+                    break;
+                default:     
+                    message = null;
+            }
+            if (message != null) {
+                events.add(new MonitoringEventDTO(time, "NORMAL", locationCode, message));
+            }
+        }
+
         previousCepAlerts = current;
         return events;
     }
@@ -530,12 +573,10 @@ public class RealTimeSimulationService {
 
         Trend trend = currentTrend(key);
         if (trend == null) {
-            // calm behaviour: random walk that drifts back toward the normal value
             return Helper.meanRevert(random, cur, range.getBaseline(), range.getAmplitude(),
                     range.getMin(), range.getMax());
         }
 
-        // active trend: push hard in one direction for a few ticks to drive escalations
         double noise = (random.nextDouble() - 0.5) * range.getAmplitude() * 0.4;
         double next = cur + trend.direction() * range.getStep() + noise;
         next = Math.max(range.getMin(), Math.min(range.getMax(), next));
@@ -635,41 +676,46 @@ public class RealTimeSimulationService {
         }
     }
 
-    private double demoForcedValue(Sensor s) {
-        if (!cepEnabled || s != demoPump) {
-            return Double.NaN;
-        }
-        if (tickCount == DEMO_PUMP_FAULTY_TICK) {
-            return -1.0; // FAULTY
-        }
-        if (tickCount >= DEMO_PUMP_RECOVER_TICK && tickCount <= DEMO_PUMP_GAP_TO_TICK + 1) {
-            return 1.0;  // keep the pump healthy and predictable for the rest of the script
-        }
-        return Double.NaN;
+    private boolean demoForcesWater(Sensor s) {
+        return s == demoWaterSensorCEP && tickCount <= DEMO_WATER_RISE_TO_TICK;
     }
 
-    // mute the demo location's heartbeat for a few ticks (gap > 5 min) to trigger the "connection lost" rule.
+    private double demoWaterValue(Sensor s) {
+        SensorValueRange range = valueRangeFor(s);
+        double rise = Math.max(60.0, (range.getMax() - range.getBaseline()) / 3.0);
+        double next = range.getBaseline() + tickCount * rise;
+        return Math.round(next * 10.0) / 10.0;
+    }
+
+    private boolean demoForcesPump(Sensor s) {
+        return s == demoPumpCEP
+                && (tickCount == DEMO_PUMP_FAULTY_TICK
+                    || (tickCount >= DEMO_PUMP_RECOVER_TICK && tickCount <= DEMO_PUMP_GAP_TO_TICK + 1));
+    }
+
+    private double demoPumpValue() {
+        return tickCount == DEMO_PUMP_FAULTY_TICK ? -1.0 : 1.0;
+    }
+
     private boolean demoSkipHeartbeat(String locationCode) {
-        return cepEnabled
-                && locationCode.equals(demoSilentLocationCode)
+        return locationCode.equals(demoSilentLocationCodeCEP)
                 && tickCount >= DEMO_HB_GAP_FROM_TICK
                 && tickCount <= DEMO_HB_GAP_TO_TICK;
     }
 
-    // mute the demo pump's heartbeat for a few ticks (gap > 10 min) to trigger the "pump connection lost" rule.
     private boolean demoSkipPumpEvent(Sensor s) {
         return cepEnabled
-                && s == demoPump
+                && s == demoPumpCEP 
                 && tickCount >= DEMO_PUMP_GAP_FROM_TICK
                 && tickCount <= DEMO_PUMP_GAP_TO_TICK;
     }
 
     private void injectDemoFacts(Date ts) {
-        if (demoPump == null) {
+        if (demoPumpCEP == null) {
             return;
         }
-        Location loc = demoPump.getLocation();
-        String pumpId = demoPump.getTagName();
+        Location loc = demoPumpCEP.getLocation();
+        String pumpId = demoPumpCEP.getTagName();
 
         // insert pump operational status to delete the stale duplicate status
         if (tickCount == DEMO_STALE_STATUS_TICK) {
@@ -680,6 +726,30 @@ public class RealTimeSimulationService {
         // insert pump restart events to trigger the "too many restarts" rule
         if (tickCount >= DEMO_RESTART_FROM_TICK && tickCount <= DEMO_RESTART_TO_TICK) {
             session.insert(new PumpEvent(loc.getCode(), pumpId, PumpEventType.RESTART, ts));
+        }
+    }
+
+    private void mutateWeather() {
+        List<WeatherCondition> all = new ArrayList<>();
+        for (Object o : session.getObjects(obj -> obj instanceof WeatherCondition)) {
+            all.add((WeatherCondition) o);
+        }
+        if (all.isEmpty()) {
+            return;
+        }
+        for (WeatherCondition wc : all) {
+            double p = wc.getPrecipitation();
+            if (p > 0.0) {
+                double decayed = Math.max(0.0, p - RAIN_DECAY_PER_TICK);
+                wc.setPrecipitation(Math.round(decayed * 10.0) / 10.0);
+                session.update(session.getFactHandle(wc), wc);
+            }
+        }
+        if (random.nextDouble() < RAIN_BURST_CHANCE) {
+            WeatherCondition wc = all.get(random.nextInt(all.size()));
+            double burst = RAIN_BURST_MIN + random.nextDouble() * (RAIN_BURST_MAX - RAIN_BURST_MIN);
+            wc.setPrecipitation(Math.round(burst * 10.0) / 10.0);
+            session.update(session.getFactHandle(wc), wc);
         }
     }
 
