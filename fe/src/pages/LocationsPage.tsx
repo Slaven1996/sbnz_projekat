@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Box, Divider, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,16 +27,10 @@ const schema = z
     posX: z.number().nullable().optional(),
     posY: z.number().nullable().optional(),
     active: z.boolean(),
-    hasWeather: z.boolean(),
-    precipitation: z.number().nullable().optional(),
   })
   .refine((v) => v.zoneId != null, {
     message: 'Zone is required',
     path: ['zoneId'],
-  })
-  .refine((v) => !v.hasWeather || v.precipitation != null, {
-    message: 'Precipitation is required when weather data is enabled',
-    path: ['precipitation'],
   });
 type FormValues = z.infer<typeof schema>;
 
@@ -48,8 +42,6 @@ const emptyValues: FormValues = {
   posX: null,
   posY: null,
   active: true,
-  hasWeather: false,
-  precipitation: null,
 };
 
 export function LocationsPage() {
@@ -60,7 +52,7 @@ export function LocationsPage() {
     size: table.pageSize,
     sort: table.sortParam,
   });
-  const { data: zones } = zonesResource.useOptions();
+  const { data: zones, refetch: refetchZones } = zonesResource.useOptions();
   const crud = useCrudController<LocationResponse, LocationRequest>(locationsResource, {
     entity: 'Location',
   });
@@ -69,12 +61,12 @@ export function LocationsPage() {
     resolver: zodResolver(schema),
     defaultValues: emptyValues,
   });
-  const hasWeather = watch('hasWeather');
   const posX = watch('posX');
   const posY = watch('posY');
 
   useEffect(() => {
     if (crud.formOpen) {
+      refetchZones();
       const e = crud.editing;
       reset(
         e
@@ -86,13 +78,11 @@ export function LocationsPage() {
               posX: e.posX,
               posY: e.posY,
               active: e.active,
-              hasWeather: Boolean(e.weatherCondition),
-              precipitation: e.weatherCondition?.precipitation ?? null,
             }
           : emptyValues,
       );
     }
-  }, [crud.formOpen, crud.editing, reset]);
+  }, [crud.formOpen, crud.editing, reset, refetchZones]);
 
   const columns = useMemo<ColumnDef<LocationResponse, any>[]>(
     () => [
@@ -124,7 +114,6 @@ export function LocationsPage() {
       posX: v.posX ?? null,
       posY: v.posY ?? null,
       active: v.active,
-      weatherCondition: v.hasWeather ? { precipitation: v.precipitation ?? 0 } : null,
     });
 
   return (
@@ -191,20 +180,6 @@ export function LocationsPage() {
           <RHFTextField name="posY" control={control} label="Position Y (lng)" type="number" />
         </Box>
         <RHFCheckboxField name="active" control={control} label="Active" />
-
-        <Divider />
-        <Typography variant="subtitle2" color="text.secondary">
-          Weather condition
-        </Typography>
-        <RHFCheckboxField name="hasWeather" control={control} label="This location has weather data" />
-        {hasWeather && (
-          <RHFTextField
-            name="precipitation"
-            control={control}
-            label="Precipitation (mm)"
-            type="number"
-          />
-        )}
       </FormDialog>
 
       <ConfirmDialog

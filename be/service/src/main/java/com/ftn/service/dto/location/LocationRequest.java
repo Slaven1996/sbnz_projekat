@@ -1,6 +1,5 @@
 package com.ftn.service.dto.location;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -27,9 +26,6 @@ public class LocationRequest {
 
     private Boolean active = true;
 
-    @Valid
-    private WeatherConditionDto weatherCondition;
-
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
 
@@ -50,7 +46,4 @@ public class LocationRequest {
 
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
-
-    public WeatherConditionDto getWeatherCondition() { return weatherCondition; }
-    public void setWeatherCondition(WeatherConditionDto weatherCondition) { this.weatherCondition = weatherCondition; }
 }

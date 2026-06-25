@@ -101,7 +101,6 @@ export interface LocationRequest {
   posX?: number | null;
   posY?: number | null;
   active?: boolean;
-  weatherCondition?: WeatherConditionDto | null;
 }
 
 export interface SensorResponse {
