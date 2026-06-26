@@ -92,6 +92,7 @@ export interface LocationResponse {
   zoneId: number | null;
   zoneCode: string | null;
   weatherCondition: WeatherConditionDto | null;
+  sensorCount: number;
 }
 export interface LocationRequest {
   code: string;
@@ -242,6 +243,7 @@ export interface MonitoringLocationState {
   recommendationPriority: string | null;
   recommendationDescription: string | null;
   severity: MonitoringSeverity;
+  monitored: boolean;
 }
 
 export interface MonitoringEvent {

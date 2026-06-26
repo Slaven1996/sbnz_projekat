@@ -1,6 +1,8 @@
 package com.ftn.service.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -17,6 +19,7 @@ import com.ftn.service.dto.location.LocationResponse;
 import com.ftn.service.exception.DuplicateResourceException;
 import com.ftn.service.exception.ResourceNotFoundException;
 import com.ftn.service.repository.LocationRepository;
+import com.ftn.service.repository.SensorRepository;
 import com.ftn.service.repository.WeatherConditionRepository;
 import com.ftn.service.repository.ZoneRepository;
 
@@ -29,25 +32,43 @@ public class LocationService {
     private final LocationRepository locationRepository;
     private final ZoneRepository zoneRepository;
     private final WeatherConditionRepository weatherRepository;
+    private final SensorRepository sensorRepository;
 
     public LocationService(LocationRepository locationRepository,
-                           ZoneRepository zoneRepository, WeatherConditionRepository weatherRepository) {
+                           ZoneRepository zoneRepository, WeatherConditionRepository weatherRepository,
+                           SensorRepository sensorRepository) {
         this.locationRepository = locationRepository;
         this.zoneRepository = zoneRepository;
         this.weatherRepository = weatherRepository;
+        this.sensorRepository = sensorRepository;
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<LocationResponse> findAll(Pageable pageable) {
         Page<Location> page = locationRepository.findAll(pageable);
+        Map<Long, Long> sensorCounts = sensorCountsByLocation();
         List<LocationResponse> content = page.getContent().stream()
-                .map(LocationResponse::new).collect(Collectors.toList());
+                .map(l -> {
+                    LocationResponse response = new LocationResponse(l);
+                    response.setSensorCount(sensorCounts.getOrDefault(l.getId(), 0L).intValue());
+                    return response;
+                }).collect(Collectors.toList());
         return new PagedResponse<>(content, page);
     }
 
     @Transactional(readOnly = true)
     public LocationResponse findById(Long id) {
-        return new LocationResponse(getOrThrow(id));
+        LocationResponse response = new LocationResponse(getOrThrow(id));
+        response.setSensorCount((int) sensorRepository.countByLocationId(id));
+        return response;
+    }
+
+    private Map<Long, Long> sensorCountsByLocation() {
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : sensorRepository.countGroupedByLocation()) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 
     public LocationResponse create(LocationRequest request) {
@@ -74,7 +95,9 @@ public class LocationService {
         l.setZone(resolveZone(request.getZoneId()));
         Location saved = locationRepository.save(l);
 
-        return new LocationResponse(saved);
+        LocationResponse response = new LocationResponse(saved);
+        response.setSensorCount((int) sensorRepository.countByLocationId(id));
+        return response;
     }
 
     public void delete(Long id) {

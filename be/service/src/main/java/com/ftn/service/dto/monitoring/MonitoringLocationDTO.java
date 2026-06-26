@@ -28,6 +28,8 @@ public class MonitoringLocationDTO {
 
     private String severity;
 
+    private boolean monitored = true;
+
     public String getLocationCode() { return locationCode; }
     public void setLocationCode(String locationCode) { this.locationCode = locationCode; }
 
@@ -88,4 +90,7 @@ public class MonitoringLocationDTO {
 
     public String getSeverity() { return severity; }
     public void setSeverity(String severity) { this.severity = severity; }
+
+    public boolean isMonitored() { return monitored; }
+    public void setMonitored(boolean monitored) { this.monitored = monitored; }
 }

@@ -96,6 +96,21 @@ export function LocationsPage() {
         cell: (c) => c.row.original.weatherCondition?.precipitation ?? '-',
       },
       {
+        id: 'sensors',
+        header: 'Sensors',
+        enableSorting: false,
+        cell: (c) => {
+          const n = c.row.original.sensorCount ?? 0;
+          return n > 0 ? (
+            n
+          ) : (
+            <Box component="span" sx={{ color: 'warning.main', fontWeight: 600 }}>
+              None
+            </Box>
+          );
+        },
+      },
+      {
         accessorKey: 'active',
         header: 'Active',
         enableSorting: false,

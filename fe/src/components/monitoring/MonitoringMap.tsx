@@ -11,6 +11,9 @@ export const SEVERITY_COLOR: Record<string, string> = {
   CRITICAL: '#c62828',
 };
 
+const UNMONITORED_FILL = '#9e9e9e';
+const UNMONITORED_STROKE = '#616161';
+
 export interface MapPoint {
   code: string;
   name: string;
@@ -20,6 +23,7 @@ export interface MapPoint {
   lat: number;
   lng: number;
   state?: MonitoringLocationState;
+  hasSensors?: boolean;
 }
 
 const CENTER: [number, number] = [45.45, 19.9];
@@ -56,15 +60,20 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {points.map((p) => {
+        const noSensors = p.hasSensors === false;
         const severity = p.state?.severity ?? 'NORMAL';
-        const color = SEVERITY_COLOR[severity] ?? '#607d8b';
+        const color = noSensors ? UNMONITORED_FILL : SEVERITY_COLOR[severity] ?? '#607d8b';
         const s = p.state;
         return (
           <CircleMarker
             key={p.code}
             center={[p.lat, p.lng]}
-            radius={radiusFor(severity)}
-            pathOptions={{ color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 0.85 }}
+            radius={radiusFor(noSensors ? 'NORMAL' : severity)}
+            pathOptions={
+              noSensors
+                ? { color: UNMONITORED_STROKE, weight: 1.5, dashArray: '3 3', fillColor: color, fillOpacity: 0.45 }
+                : { color: '#ffffff', weight: 2, fillColor: color, fillOpacity: 0.85 }
+            }
           >
             <Tooltip direction="top" offset={[0, -4]}>
               <Box sx={{ minWidth: 150 }}>
@@ -73,19 +82,27 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
                   <Row label="Display code" value={p.displayCode} />
                   <Row label="Type" value={p.type} />
                   <Row label="Zone" value={p.zoneName} />
-                  <Row label="Status" value={severity} />
-                  <Row
-                    label="Pumps"
-                    value={s?.capacityLevel
-                      ? `${s.capacityLevel}${s.totalPumps ? ` (${s.activePumps ?? 0}/${s.totalPumps})` : ''}`
-                      : null}
-                  />
-                  <Row
-                    label="Action"
-                    value={s?.recommendation
-                      ? `${s.recommendation}${s.recommendationPriority ? ` (${s.recommendationPriority})` : ''}`
-                      : null}
-                  />
+                  {noSensors ? (
+                    <Typography variant="caption" sx={{ color: UNMONITORED_STROKE, fontWeight: 700, mt: 0.5 }}>
+                      No sensors - measuring not possible
+                    </Typography>
+                  ) : (
+                    <>
+                      <Row label="Status" value={severity} />
+                      <Row
+                        label="Pumps"
+                        value={s?.capacityLevel
+                          ? `${s.capacityLevel}${s.totalPumps ? ` (${s.activePumps ?? 0}/${s.totalPumps})` : ''}`
+                          : null}
+                      />
+                      <Row
+                        label="Action"
+                        value={s?.recommendation
+                          ? `${s.recommendation}${s.recommendationPriority ? ` (${s.recommendationPriority})` : ''}`
+                          : null}
+                      />
+                    </>
+                  )}
                 </Stack>
               </Box>
             </Tooltip>
@@ -94,7 +111,25 @@ export function MonitoringMap({ points }: { points: MapPoint[] }) {
                 <Typography variant="subtitle2" gutterBottom>{p.name}</Typography>
                 <Typography variant="caption" color="text.secondary">{p.code}</Typography>
                 <Divider sx={{ my: 0.5 }} />
-                {s ? (
+                {noSensors ? (
+                  <Box
+                    sx={{
+                      bgcolor: 'rgba(97,97,97,0.08)',
+                      border: '1px solid',
+                      borderColor: UNMONITORED_STROKE,
+                      borderRadius: 1,
+                      p: 1,
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ color: UNMONITORED_STROKE, fontWeight: 700, display: 'block' }}>
+                      No sensors attached
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Water level, flow and pump status cannot be measured for this location.
+                      Add a sensor to enable live monitoring.
+                    </Typography>
+                  </Box>
+                ) : s ? (
                   <Stack spacing={0.25}>
                     <Row label="Severity" value={severity} />
                     <Row

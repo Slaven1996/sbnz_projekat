@@ -22,7 +22,6 @@ INSERT IGNORE INTO tag_units (id, code, unit, description) VALUES
     (1, 'CM',    'cm',    'Water level (centimeters)'),
     (2, 'M3S',   'm³/s',  'Flow rate (cubic meters per second)'),
     (3, 'STATE', 'state', 'Pump operational state'),
-    (4, 'MMH',   'mm/h',  'Precipitation intensity');
 
 INSERT IGNORE INTO zones (id, code, name, description) VALUES
     (1, 'WBD', 'West Bačka District',    'Administrative seat: Sombor'),

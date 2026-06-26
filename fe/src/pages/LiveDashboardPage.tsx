@@ -79,16 +79,21 @@ export function LiveDashboardPage() {
 
   const points: MapPoint[] = useMemo(() => {
     const base = (locations ?? []).filter((l) => l.posX != null && l.posY != null);
-    return base.map((l) => ({
-      code: l.code,
-      name: l.displayCode || l.code,
-      displayCode: l.displayCode,
-      type: l.type,
-      zoneName: l.zoneId != null ? zoneNameById.get(l.zoneId) ?? l.zoneCode : l.zoneCode,
-      lat: l.posX as number,
-      lng: l.posY as number,
-      state: stateByCode.get(l.code),
-    }));
+    return base.map((l) => {
+      const state = stateByCode.get(l.code);
+      const hasSensors = state ? state.monitored : (l.sensorCount ?? 0) > 0;
+      return {
+        code: l.code,
+        name: l.displayCode || l.code,
+        displayCode: l.displayCode,
+        type: l.type,
+        zoneName: l.zoneId != null ? zoneNameById.get(l.zoneId) ?? l.zoneCode : l.zoneCode,
+        lat: l.posX as number,
+        lng: l.posY as number,
+        state,
+        hasSensors,
+      };
+    });
   }, [locations, stateByCode, zoneNameById]);
 
   const handleToggle = () => {

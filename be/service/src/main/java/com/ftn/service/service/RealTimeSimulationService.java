@@ -123,6 +123,7 @@ public class RealTimeSimulationService {
 
     private List<Location> locations = new ArrayList<>();
     private List<Sensor> sensors = new ArrayList<>();
+    private final Set<String> monitoredLocationCodes = new HashSet<>();
     private List<ThresholdConfig> thresholds = new ArrayList<>();
     private final Map<String, FactHandle> readingHandles = new HashMap<>();
     private final Map<String, Double> values = new HashMap<>();
@@ -227,10 +228,12 @@ public class RealTimeSimulationService {
             activeLocationIds.add(l.getId());
         }
         sensors = new ArrayList<>();
+        monitoredLocationCodes.clear();
         List<Sensor> allSensors = sensorRepository.findAll();
         for (Sensor s : allSensors) {
             if (s.getLocation() != null && activeLocationIds.contains(s.getLocation().getId())) {
                 sensors.add(s);
+                monitoredLocationCodes.add(s.getLocation().getCode());
             }
         }
         reloadThresholdMap();
@@ -401,6 +404,7 @@ public class RealTimeSimulationService {
             dto.setZoneCode(loc.getZone() != null ? loc.getZone().getCode() : null);
             dto.setPosX(loc.getPosX());
             dto.setPosY(loc.getPosY());
+            dto.setMonitored(monitoredLocationCodes.contains(code));
 
             WaterLevelStatus w = wls.get(code);
             if (w != null) {

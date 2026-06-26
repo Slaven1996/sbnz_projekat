@@ -15,6 +15,7 @@ public class LocationResponse {
     private Long zoneId;
     private String zoneCode;
     private WeatherConditionDto weatherCondition;
+    private int sensorCount;
 
     public LocationResponse() {
     }
@@ -65,4 +66,7 @@ public class LocationResponse {
 
     public WeatherConditionDto getWeatherCondition() { return weatherCondition; }
     public void setWeatherCondition(WeatherConditionDto weatherCondition) { this.weatherCondition = weatherCondition; }
+
+    public int getSensorCount() { return sensorCount; }
+    public void setSensorCount(int sensorCount) { this.sensorCount = sensorCount; }
 }
