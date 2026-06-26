@@ -96,7 +96,7 @@ export function ThresholdConfigsPage() {
     <Box>
       <PageHeader
         title="Threshold Configs"
-        subtitle="Normal / warning / critical limits per location & parameter"
+        subtitle="Normal / warning / critical limits per location and parameter"
         addLabel="Add Threshold"
         onAdd={isAdmin ? crud.openCreate : undefined}
       />

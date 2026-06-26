@@ -40,7 +40,7 @@ const pulse = keyframes`
 
 const ALERT_CHIP_STYLE: Record<string, { bg: string; fg: string }> = {
   GREEN: { bg: '#2e7d32', fg: '#fff' },
-  YELLOW: { bg: '#fbc02d', fg: '#212121' },
+  YELLOW: { bg: '#fbc02d', fg: '#fff' },
   ORANGE: { bg: '#ef6c00', fg: '#fff' },
   RED: { bg: '#c62828', fg: '#fff' },
 };
@@ -112,7 +112,7 @@ export function LiveDashboardPage() {
     when: isActive,
     title: 'Stop monitoring?',
     message: 'Live monitoring is running. Leaving this page will stop it. Do you want to continue?',
-    confirmLabel: 'Leave & stop',
+    confirmLabel: 'Leave and stop',
     cancelLabel: 'Stay',
     onConfirm: () => {
       stopMutation.mutate();
