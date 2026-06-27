@@ -77,7 +77,7 @@ public class RealTimeSimulationService {
     private static final int TREND_MIN_TICKS = 3;
     private static final int TREND_EXTRA_TICKS = 3;
 
-    private static final double RAIN_BURST_CHANCE = 0.05;
+    private static final double RAIN_BURST_CHANCE = 0.15;
     private static final double RAIN_BURST_MIN = 35.0;
     private static final double RAIN_BURST_MAX = 80.0;
     private static final double RAIN_DECAY_PER_TICK = 8.0;

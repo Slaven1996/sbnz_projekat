@@ -140,7 +140,7 @@ export function LiveDashboardPage() {
         />
         {latest && (
           <>
-            <Chip size="small" variant="outlined" label={`Sim clock: ${latest.pseudoTime?.replace('T', ' ')}`} />
+            <Chip size="small" variant="outlined" label={`${latest.pseudoTime?.replace('T', ' ')}`} />
             <Chip size="small" variant="outlined" label={`Tick #${latest.tick}`} />
             <Chip size="small" variant="outlined" label={`${latest.firedRules} rules fired`} />
             <Chip
@@ -207,10 +207,15 @@ export function LiveDashboardPage() {
                 )}
 
                 {status && (
+                  <>
                   <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
-                    Tick interval {status.tickIntervalSeconds}s · pseudo-clock step {status.pseudoStepMinutes} min ·
-                    {' '}{status.locationCount} sites
+                    Tick interval {status.tickIntervalSeconds}s
                   </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
+                    {status.locationCount} sites
+                  </Typography>
+                  </>
+                  
                 )}
               </CardContent>
             </Card>
