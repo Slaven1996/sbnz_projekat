@@ -131,6 +131,20 @@ public class Helper {
         Map<String, FloodRiskAssessment> risks = index(session, FloodRiskAssessment.class, FloodRiskAssessment::getLocation);
         Map<String, InterventionRecommendation> recs = index(session, InterventionRecommendation.class, InterventionRecommendation::getLocation);
 
+        Map<String, Double> waterReadings = new HashMap<>();
+        Map<String, Double> flowReadings = new HashMap<>();
+        for (Object o : session.getObjects(obj -> obj instanceof SensorReading)) {
+            SensorReading sr = (SensorReading) o;
+            if (sr.getLocation() == null) {
+                continue;
+            }
+            if (sr.getSensorType() == SensorType.WATER_LEVEL) {
+                waterReadings.put(sr.getLocation().getCode(), sr.getValue());
+            } else if (sr.getSensorType() == SensorType.FLOW_RATE) {
+                flowReadings.put(sr.getLocation().getCode(), sr.getValue());
+            }
+        }
+
         Map<String, LocationStateDTO> result = new LinkedHashMap<>();
         for (Map.Entry<String, Location> e : locations.entrySet()) {
             String code = e.getKey();
@@ -143,12 +157,14 @@ public class Helper {
             WaterLevelStatus w = wls.get(code);
             if (w != null) {
                 dto.setWaterLevel(w.getLevel());
-                dto.setWaterValue(w.getValue());
+                Double latestWater = waterReadings.get(code);
+                dto.setWaterValue(latestWater != null ? latestWater : w.getValue());
             }
             FlowRateStatus f = frs.get(code);
             if (f != null) {
                 dto.setFlowLevel(f.getLevel());
-                dto.setFlowValue(f.getValue());
+                Double latestFlow = flowReadings.get(code);
+                dto.setFlowValue(latestFlow != null ? latestFlow : f.getValue());
             }
             StationCapacity c = caps.get(code);
             if (c != null) {
@@ -187,7 +203,7 @@ public class Helper {
         }
         if (!Objects.equals(prevAlert, curAlert) && curAlert != null) {
             changes.add(String.format("SYSTEM ALERT: %s -> %s",
-                    prevAlert == null ? "-" : prevAlert, curAlert));
+                    prevAlert == null ? "" : prevAlert, curAlert));
         }
         return changes;
     }

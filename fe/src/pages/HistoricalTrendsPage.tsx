@@ -164,7 +164,7 @@ export function HistoricalTrendsPage() {
             </Stack>
           </Paper>
 
-          <SimulationTimeline events={data.timeline} />
+          <SimulationTimeline events={data.timeline} stepUnit={data.stepUnit} />
         </>
       )}
 

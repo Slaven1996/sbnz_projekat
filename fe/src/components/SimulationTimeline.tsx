@@ -136,14 +136,14 @@ function LocationCard({ s }: { s: SimulationLocationState }) {
   );
 }
 
-function EventContent({ event }: { event: SimulationTimelineEvent }) {
+function EventContent({ event, stepUnit }: { event: SimulationTimelineEvent; stepUnit?: string }) {
   const hex = alertHex(event.systemAlertLevel);
+  const isDay = stepUnit === 'DAY';
   const when = new Date(event.stepTime).toLocaleString(undefined, {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
+    ...(isDay ? {} : { hour: '2-digit', minute: '2-digit' }),
   });
 
   return (
@@ -208,7 +208,7 @@ function EventContent({ event }: { event: SimulationTimelineEvent }) {
   );
 }
 
-export function SimulationTimeline({ events }: { events: SimulationTimelineEvent[] }) {
+export function SimulationTimeline({ events, stepUnit }: { events: SimulationTimelineEvent[]; stepUnit?: string }) {
   if (events.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary">
@@ -233,7 +233,7 @@ export function SimulationTimeline({ events }: { events: SimulationTimelineEvent
               {i < events.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
             <TimelineContent sx={{ pb: 3 }}>
-              <EventContent event={event} />
+              <EventContent event={event} stepUnit={stepUnit} />
             </TimelineContent>
           </TimelineItem>
         );

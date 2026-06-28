@@ -442,7 +442,7 @@ public class RealTimeSimulationService {
             if (!Objects.equals(oldRisk == null ? "" : oldRisk, newRisk == null ? "" : newRisk)
                     && newRisk != null) {
                 events.add(new MonitoringEventDTO(time, dto.getSeverity(), code,
-                        "Flood risk " + (oldRisk == null || oldRisk.isEmpty() ? "-" : oldRisk)
+                        "Flood risk " + (oldRisk == null || oldRisk.isEmpty() ? "" : oldRisk)
                                 + " -> " + newRisk));
             }
 
@@ -455,7 +455,7 @@ public class RealTimeSimulationService {
                                 + "/" + dto.getTotalPumps() + ")"
                         : "";
                 events.add(new MonitoringEventDTO(time, Helper.mapCapacitySeverity(newCap), code,
-                        "Pump capacity " + (oldCap.isEmpty() ? "-" : oldCap) + " -> " + newCap + pumps));
+                        "Pump capacity " + (oldCap.isEmpty() ? "" : oldCap) + " -> " + newCap + pumps));
             }
 
             String newRec = dto.getRecommendation();
@@ -483,7 +483,7 @@ public class RealTimeSimulationService {
 
         if (!Objects.equals(previousSystemAlert, alertLevel) && alertLevel != null) {
             events.add(new MonitoringEventDTO(time, Helper.mapAlertSeverity(alertLevel), null,
-                    "SYSTEM ALERT: " + (previousSystemAlert == null ? "-" : previousSystemAlert)
+                    "SYSTEM ALERT: " + (previousSystemAlert == null ? "" : previousSystemAlert)
                             + " -> " + alertLevel));
         }
         previousSystemAlert = alertLevel;
